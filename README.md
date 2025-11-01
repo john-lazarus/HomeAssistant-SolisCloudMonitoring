@@ -2,6 +2,10 @@
 
 Home Assistant integration for Solis Cloud string inverters. It polls the Solis Cloud v2 API on a fixed schedule and exposes production and diagnostic telemetry as sensors. Tested with an S6-GR1P5K-S (model 0115) inverter running on a Solis Cloud account with API access enabled.
 
+If this project helps you, you can buy me a coffee:
+
+<a href="https://www.buymeacoffee.com/trusmith" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="60" width="217"></a>
+
 ## Features
 - Polls the Solis Cloud `inverterDetail` endpoint every 60 seconds
 - Discovers up to five inverters linked to the API user automatically
@@ -64,7 +68,3 @@ Add `sensor.solis_<serial>_energy_today` to the Solar Production slot. The senso
 
 ## Support
 Report issues at the GitHub repository and include debug logs from `custom_components.solis_cloud_monitoring` when filing a ticket. For new inverter models, attach a sanitized dump from `testing/solis_api_tester.py` so entity support can be assessed.
-
-If this project helped you, please consider supporting my work:
-
-<a href="https://www.buymeacoffee.com/trusmith" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="60" width="217"></a>
