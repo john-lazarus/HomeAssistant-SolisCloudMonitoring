@@ -9,7 +9,7 @@ import json
 import logging
 import os
 import sys
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict, List, Optional
 
 import aiohttp
@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -52,7 +52,7 @@ class SolisCloudAPI:
         
         # Create signature
         content_type = "application/json"
-        date = datetime.utcnow().strftime("%a, %d %b %Y %H:%M:%S GMT")
+        date = datetime.now(UTC).strftime("%a, %d %b %Y %H:%M:%S GMT")
         
         # Authorization string per Solis API spec
         string_to_sign = f"POST\n{content_md5}\n{content_type}\n{date}\n{endpoint}"
@@ -170,6 +170,13 @@ def print_json(data: Any, indent: int = 2):
     print(json.dumps(data, indent=indent, ensure_ascii=False))
 
 
+def print_flat_stats(data: Dict[str, Any]) -> None:
+    """Print every key/value pair available in the inverter payload."""
+    print_section("ALL INVERTER FIELDS (SORTED)")
+    for key in sorted(data.keys()):
+        print(f"{key}: {data[key]}")
+
+
 async def test_monitoring_endpoints(api: SolisCloudAPI, inverter_sn: Optional[str] = None):
     """Test and extract Home Assistant energy dashboard relevant data"""
     
@@ -179,13 +186,13 @@ async def test_monitoring_endpoints(api: SolisCloudAPI, inverter_sn: Optional[st
     if inverters:
         if not inverter_sn and inverters:
             inverter_sn = inverters[0].get("sn")
-        print(f"✓ Found inverter: {inverter_sn}")
+        print(f"Found inverter: {inverter_sn}")
     else:
-        print("⚠️  No inverters found")
+        print("No inverters found")
         return
     
     if not inverter_sn:
-        print("⚠️  No inverter serial number available")
+        print("No inverter serial number available")
         return
     
     # Get Inverter Details
@@ -193,7 +200,7 @@ async def test_monitoring_endpoints(api: SolisCloudAPI, inverter_sn: Optional[st
     inverter_details = await api.get_inverter_details(inverter_sn)
     
     if not inverter_details:
-        print("⚠️  Failed to fetch inverter details")
+        print("Failed to fetch inverter details")
         return
     
     # Extract HA Energy Dashboard relevant data
@@ -320,38 +327,40 @@ async def test_monitoring_endpoints(api: SolisCloudAPI, inverter_sn: Optional[st
     }
     
     # Display formatted output
-    print("\n🔋 DEVICE INFORMATION:")
+    print("\nDEVICE INFORMATION:")
     for key, value in solar_data["device_info"].items():
         print(f"   {key.replace('_', ' ').title()}: {value}")
     
-    print("\n⚡ POWER SENSORS (Real-time):")
+    print("\nPOWER SENSORS (Real-time):")
     for sensor_name, sensor_data in solar_data["power_sensors"].items():
         print(f"   {sensor_data['description']}: {sensor_data['value']} {sensor_data['unit']}")
     
-    print("\n📊 ENERGY SENSORS (For HA Energy Dashboard):")
+    print("\nENERGY SENSORS (For HA Energy Dashboard):")
     for sensor_name, sensor_data in solar_data["energy_sensors"].items():
         print(f"   {sensor_data['description']}: {sensor_data['value']} {sensor_data['unit']}")
     
-    print("\n🌞 PV STRING MONITORING:")
+    print("\nPV STRING MONITORING:")
     for sensor_name, sensor_data in solar_data["string_monitoring"].items():
         print(f"   {sensor_data['description']}: {sensor_data['value']} {sensor_data['unit']}")
     
-    print("\n🔌 GRID MONITORING:")
+    print("\nGRID MONITORING:")
     for sensor_name, sensor_data in solar_data["grid_monitoring"].items():
         print(f"   {sensor_data['description']}: {sensor_data['value']} {sensor_data['unit']}")
     
-    print("\n📈 STATUS & DIAGNOSTICS:")
+    print("\nSTATUS & DIAGNOSTICS:")
     for sensor_name, sensor_data in solar_data["status_sensors"].items():
         unit = f" {sensor_data['unit']}" if 'unit' in sensor_data else ""
         print(f"   {sensor_data['description']}: {sensor_data['value']}{unit}")
     
+    print_flat_stats(inverter_details)
+
     print("\n" + "=" * 80)
-    print("💡 HOME ASSISTANT INTEGRATION NOTES:")
+    print("HOME ASSISTANT INTEGRATION NOTES:")
     print("=" * 80)
-    print("✓ Primary sensor for Energy Dashboard: energy_today (kWh)")
-    print("✓ Configure as 'Solar Production' in HA Energy settings")
-    print("✓ All sensors include proper device_class and state_class for HA")
-    print("✓ Power sensors update in real-time, energy sensors accumulate")
+    print("Primary sensor for Energy Dashboard: energy_today (kWh)")
+    print("Configure as 'Solar Production' in HA Energy settings")
+    print("All sensors include proper device_class and state_class for HA")
+    print("Power sensors update in real-time, energy sensors accumulate")
     print("=" * 80)
 
 
@@ -366,7 +375,7 @@ async def main():
     
     # Validate credentials
     if not api_key or not api_secret:
-        print("❌ Error: SOLIS_API_KEY and SOLIS_API_SECRET must be set in environment variables")
+        print("ERROR: SOLIS_API_KEY and SOLIS_API_SECRET must be set in environment variables")
         print("\nCreate a .env file with:")
         print("SOLIS_API_KEY=your_key_here")
         print("SOLIS_API_SECRET=your_secret_here")
@@ -374,7 +383,7 @@ async def main():
         sys.exit(1)
     
     print("=" * 80)
-    print("  SOLIS CLOUD → HOME ASSISTANT ENERGY DASHBOARD")
+    print("  SOLIS CLOUD -> HOME ASSISTANT ENERGY DASHBOARD")
     print("  Solar Production Sensor Configuration")
     print("=" * 80)
     
@@ -383,7 +392,7 @@ async def main():
         await test_monitoring_endpoints(api, inverter_sn)
     
     print("\n" + "=" * 80)
-    print("  ✅ SENSOR CONFIGURATION COMPLETE")
+    print("  SENSOR CONFIGURATION COMPLETE")
     print("=" * 80)
     print("\nReady to build Home Assistant custom integration with these sensors.")
 
