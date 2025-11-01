@@ -2,7 +2,7 @@
 
 Home Assistant integration for Solis Cloud string inverters. It polls the Solis Cloud v2 API on a fixed schedule and exposes production and diagnostic telemetry as sensors. Tested with an S6-GR1P5K-S (model 0115) inverter running on a Solis Cloud account with API access enabled.
 
-If this project helps you, you can buy me a coffee:
+If this project helped you, please consider supporting my work:
 
 <a href="https://www.buymeacoffee.com/trusmith" target="_blank"><img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="60" width="217"></a>
 
