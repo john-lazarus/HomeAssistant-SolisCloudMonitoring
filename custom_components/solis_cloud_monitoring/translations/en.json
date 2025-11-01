@@ -1,0 +1,76 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Solis Cloud",
+        "description": "Enter your Solis Cloud API credentials. You can find these in your SolisCloud account under API Management.",
+        "data": {
+          "api_key": "API Key (KeyID)",
+          "api_secret": "API Secret (KeySecret)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid API credentials. Please check your API Key and Secret.",
+      "cannot_connect": "Unable to connect to Solis Cloud API. Please check your internet connection and try again.",
+      "unknown": "An unexpected error occurred. Please try again."
+    },
+    "abort": {
+      "already_configured": "This API Key is already configured."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "current_power": {
+        "name": "Current Power"
+      },
+      "dc_power": {
+        "name": "DC Power"
+      },
+      "energy_today": {
+        "name": "Energy Today"
+      },
+      "energy_month": {
+        "name": "Energy This Month"
+      },
+      "energy_year": {
+        "name": "Energy This Year"
+      },
+      "energy_total": {
+        "name": "Total Energy"
+      },
+      "pv1_voltage": {
+        "name": "PV String 1 Voltage"
+      },
+      "pv1_current": {
+        "name": "PV String 1 Current"
+      },
+      "pv1_power": {
+        "name": "PV String 1 Power"
+      },
+      "grid_voltage": {
+        "name": "Grid Voltage"
+      },
+      "grid_current": {
+        "name": "Grid Current"
+      },
+      "grid_frequency": {
+        "name": "Grid Frequency"
+      },
+      "inverter_temperature": {
+        "name": "Inverter Temperature"
+      },
+      "daily_runtime": {
+        "name": "Generation Hours Today"
+      },
+      "inverter_state": {
+        "name": "Inverter Status",
+        "state": {
+          "offline": "Offline",
+          "standby": "Standby",
+          "generating": "Generating"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "title": "Solis Cloud Monitoring",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Solis Cloud",
+        "description": "Enter your Solis Cloud API credentials",
+        "data": {
+          "api_key": "API Key",
+          "api_secret": "API Secret"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Invalid credentials",
+      "cannot_connect": "Cannot connect",
+      "unknown": "Unknown error"
+    },
+    "abort": {
+      "already_configured": "Already configured"
+    }
+  }
+}

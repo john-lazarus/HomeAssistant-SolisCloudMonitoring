@@ -1,0 +1,10 @@
+# Python dependencies for Solis Cloud API Tester
+
+# HTTP client for async API requests
+aiohttp>=3.9.0
+
+# Environment variable management
+python-dotenv>=1.0.0
+
+# Optional: For better date handling if needed
+python-dateutil>=2.8.2
