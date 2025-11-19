@@ -21,10 +21,12 @@ If this project helped you, please consider supporting my work:
 ## Installation
 
 ### HACS (recommended)
-1. In HACS, open `Integrations` → overflow menu → `Custom repositories`.
-2. Add `https://github.com/john-lazarus/HomeAssistant-SolisCloudMonitoring` as type `Integration`.
-3. Install **Solis Cloud Monitoring** from the HACS integration catalog.
-4. Restart Home Assistant.
+
+<a href="https://my.home-assistant.io/redirect/hacs_repository/?owner=john-lazarus&repository=HomeAssistant-SolisCloudMonitoring&category=integration" target="_blank"><img src="https://my.home-assistant.io/badges/hacs_repository.svg" alt="Open this repository in HACS" width="260"></a>
+
+1. In HACS, open `Integrations` → `+ Explore & Add Integrations`.
+2. Search for **Solis Cloud Monitoring**, open the entry, and click `Download`.
+3. Restart Home Assistant to load the integration.
 
 ### Manual copy
 1. Copy `custom_components/solis_cloud_monitoring` into `/config/custom_components/` on your Home Assistant instance.
