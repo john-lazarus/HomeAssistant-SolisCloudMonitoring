@@ -322,6 +322,20 @@ async def test_monitoring_endpoints(api: SolisCloudAPI, inverter_sn: Optional[st
                 "description": "Grid Frequency",
                 "ha_device_class": "frequency",
                 "ha_state_class": "measurement"
+            },
+            "grid_power": {
+                "value": inverter_details.get("pSum"),
+                "unit": "kW",
+                "description": "Grid Power",
+                "ha_device_class": "power",
+                "ha_state_class": "measurement"
+            },
+            "load_power": {
+                "value": inverter_details.get("pLoad"),
+                "unit": "kW",
+                "description": "Load Power",
+                "ha_device_class": "power",
+                "ha_state_class": "measurement"
             }
         },
         "status_sensors": {

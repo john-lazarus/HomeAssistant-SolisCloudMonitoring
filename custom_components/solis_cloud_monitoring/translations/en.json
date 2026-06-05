@@ -66,6 +66,12 @@
       "grid_frequency": {
         "name": "Grid Frequency"
       },
+      "grid_power": {
+        "name": "Grid Power"
+      },
+      "load_power": {
+        "name": "Load Power"
+      },
       "inverter_temperature": {
         "name": "Inverter Temperature"
       },

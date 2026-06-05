@@ -74,7 +74,8 @@ Sensors follow the pattern `sensor.solis_<last4serial>_<sensor_key>`, for exampl
 - `energy_year`, `energy_total` MWh
 - `pv1_voltage` V, `pv1_current` A, `pv1_power` W
 - `pv2_voltage` V, `pv2_current` A, `pv2_power` W
-- `grid_voltage` V, `grid_current` A, `grid_frequency` Hz
+- `grid_voltage` V, `grid_current` A, `grid_frequency` Hz, `grid_power` kW
+- `load_power` kW
 - `inverter_temperature` °C
 - `daily_runtime` hours
 - `inverter_state` enum (offline, standby, generating)

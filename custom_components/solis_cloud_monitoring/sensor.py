@@ -204,6 +204,26 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         suggested_display_precision=2,
         value_fn=lambda data: _coerce_float(data.get("fac")),
     ),
+    SolisSensorEntityDescription(
+        key="grid_power",
+        translation_key="grid_power",
+        name="Grid Power",
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
+        value_fn=lambda data: _coerce_float(data.get("pSum")),
+    ),
+    SolisSensorEntityDescription(
+        key="load_power",
+        translation_key="load_power",
+        name="Load Power",
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
+        value_fn=lambda data: _coerce_float(data.get("pLoad")),
+    ),
     # Status and Diagnostics
     SolisSensorEntityDescription(
         key="inverter_temperature",
