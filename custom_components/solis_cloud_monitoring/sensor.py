@@ -208,6 +208,201 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
             "3": "generating",
         }.get(str(data.get("currentState")), "offline"),
     ),
+    #Battery Sensors
+    SolisSensorEntityDescription(
+        key="battery_soc",
+        translation_key="battery_soc",
+        name="Battery SOC",
+        native_unit_of_measurement="%",
+        device_class=SensorDeviceClass.BATTERY,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=0,
+        value_fn=lambda data: _coerce_float(data.get("batteryPercent")),
+    ),
+    SolisSensorEntityDescription(
+        key="battery_power",
+        translation_key="battery_power",
+        name="Battery Power",
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
+        value_fn=lambda data: _coerce_float(data.get("batteryPower")),
+    ),
+    SolisSensorEntityDescription(
+        key="battery_voltage",
+        translation_key="battery_voltage",
+        name="Battery Voltage",
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
+        value_fn=lambda data: _coerce_float(
+            data.get("storageBatteryVoltage")
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="battery_current",
+        translation_key="battery_current",
+        name="Battery Current",
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
+        value_fn=lambda data: _coerce_float(
+            data.get("storageBatteryCurrent")
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="battery_charge_power",
+        translation_key="battery_charge_power",
+        name="Battery Charge Power",
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
+        value_fn=lambda data: _coerce_float(
+            data.get("batteryChargeEnergy")
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="battery_discharge_power",
+        translation_key="battery_discharge_power",
+        name="Battery Discharge Power",
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
+        value_fn=lambda data: _coerce_float(
+            data.get("batteryDischargeEnergy")
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="battery_total_charge_energy",
+        translation_key="battery_total_charge_energy",
+        name="Battery Total Charge Energy",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _coerce_float(
+            data.get("batteryTotalChargeEnergy")
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="battery_total_discharge_energy",
+        translation_key="battery_total_discharge_energy",
+        name="Battery Total Discharge Energy",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _coerce_float(
+            data.get("batteryTotalDischargeEnergy")
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="battery_state",
+        translation_key="battery_state",
+        name="Battery State",
+        device_class=SensorDeviceClass.ENUM,
+        options=[
+            "idle",
+            "charging",
+            "discharging",
+            "standby",
+        ],
+        value_fn=lambda data: {
+            "0": "idle",
+            "1": "charging",
+            "2": "discharging",
+            "3": "standby",
+        }.get(str(data.get("batteryDirection")), "unknown"),
+    ),
+    SolisSensorEntityDescription(
+        key="home_load_power",
+        translation_key="home_load_power",
+        name="Home Load Power",
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=3,
+        value_fn=lambda data: _coerce_float(
+            data.get("familyLoadPower")
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="home_load_today",
+        translation_key="home_load_today",
+        name="Home Load Today",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _coerce_float(
+            data.get("homeLoadTodayEnergy")
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="home_load_total",
+        translation_key="home_load_total",
+        name="Home Load Total",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _coerce_float(
+            data.get("homeLoadTotalEnergy")
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="grid_import_today",
+        translation_key="grid_import_today",
+        name="Grid Import Today",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _coerce_float(
+            data.get("gridPurchasedTodayEnergy")
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="grid_import_total",
+        translation_key="grid_import_total",
+        name="Grid Import Total",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _coerce_float(
+            data.get("gridPurchasedTotalEnergy")
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="grid_export_today",
+        translation_key="grid_export_today",
+        name="Grid Export Today",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _coerce_float(
+            data.get("gridSellTodayEnergy")
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="grid_export_total",
+        translation_key="grid_export_total",
+        name="Grid Export Total",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _coerce_float(
+            data.get("gridSellTotalEnergy")
+        ),
+    ),
 )
 
 

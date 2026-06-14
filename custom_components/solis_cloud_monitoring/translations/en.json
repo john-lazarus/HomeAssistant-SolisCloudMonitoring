@@ -70,6 +70,60 @@
           "standby": "Standby",
           "generating": "Generating"
         }
+      },
+      "battery_soc": {
+        "name": "Battery SOC"
+      },
+      "battery_power": {
+        "name": "Battery Power"
+      },
+      "battery_voltage": {
+        "name": "Battery Voltage"
+      },
+      "battery_current": {
+        "name": "Battery Current"
+      },
+      "battery_charge_power": {
+        "name": "Battery Charge Power"
+      },
+      "battery_discharge_power": {
+        "name": "Battery Discharge Power"
+      },
+      "battery_total_charge_energy": {
+        "name": "Battery Total Charge Energy"
+      },
+      "battery_total_discharge_energy": {
+        "name": "Battery Total Discharge Energy"
+      },
+      "battery_state": {
+        "name": "Battery State",
+        "state": {
+          "idle": "Idle",
+          "charging": "Charging",
+          "discharging": "Discharging",
+          "standby": "Standby"
+        }
+      },
+      "home_load_power": {
+        "name": "Home Load Power"
+      },
+      "home_load_today": {
+        "name": "Home Load Today"
+      },
+      "home_load_total": {
+        "name": "Home Load Total"
+      },
+      "grid_import_today": {
+        "name": "Grid Import Today"
+      },
+      "grid_import_total": {
+        "name": "Grid Import Total"
+      },
+      "grid_export_today": {
+        "name": "Grid Export Today"
+      },
+      "grid_export_total": {
+        "name": "Grid Export Total"
       }
     }
   }
