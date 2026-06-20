@@ -21,23 +21,38 @@
   },
   "entity": {
     "sensor": {
-      "current_power": {
-        "name": "Current Power"
+      "inverter_ac_power": {
+        "name": "Inverter AC Power"
       },
-      "dc_power": {
-        "name": "DC Power"
+      "inverter_dc_power": {
+        "name": "Inverter DC Power"
       },
-      "energy_today": {
-        "name": "Energy Today"
+      "inverter_generation_today_energy": {
+        "name": "Inverter Generation Today"
       },
-      "energy_month": {
-        "name": "Energy This Month"
+      "inverter_generation_month_energy": {
+        "name": "Inverter Generation This Month"
       },
-      "energy_year": {
-        "name": "Energy This Year"
+      "inverter_generation_year_energy": {
+        "name": "Inverter Generation This Year"
       },
-      "energy_total": {
-        "name": "Total Energy"
+      "inverter_generation_total_energy": {
+        "name": "Inverter Generation Total"
+      },
+      "inverter_temperature": {
+        "name": "Inverter Temperature"
+      },
+      "inverter_daily_runtime": {
+        "name": "Inverter Runtime Today"
+      },
+      "inverter_state": {
+        "name": "Inverter Status",
+        "state": {
+          "offline": "Offline",
+          "standby": "Standby",
+          "generating": "Generating",
+          "unknown": "Unknown"
+        }
       },
       "pv1_voltage": {
         "name": "PV String 1 Voltage"
@@ -48,27 +63,105 @@
       "pv1_power": {
         "name": "PV String 1 Power"
       },
-      "grid_voltage": {
-        "name": "Grid Voltage"
+      "pv2_voltage": {
+        "name": "PV String 2 Voltage"
       },
-      "grid_current": {
-        "name": "Grid Current"
+      "pv2_current": {
+        "name": "PV String 2 Current"
+      },
+      "pv2_power": {
+        "name": "PV String 2 Power"
+      },
+      "grid_l1_voltage": {
+        "name": "Grid L1 Voltage"
+      },
+      "grid_l1_current": {
+        "name": "Grid L1 Current"
+      },
+      "grid_l2_voltage": {
+        "name": "Grid L2 Voltage"
+      },
+      "grid_l2_current": {
+        "name": "Grid L2 Current"
+      },
+      "grid_l3_voltage": {
+        "name": "Grid L3 Voltage"
+      },
+      "grid_l3_current": {
+        "name": "Grid L3 Current"
       },
       "grid_frequency": {
         "name": "Grid Frequency"
       },
-      "inverter_temperature": {
-        "name": "Inverter Temperature"
+      "grid_active_power": {
+        "name": "Grid Active Power"
       },
-      "daily_runtime": {
-        "name": "Generation Hours Today"
+      "battery_soc": {
+        "name": "Battery SOC"
       },
-      "inverter_state": {
-        "name": "Inverter Status",
+      "battery_soh": {
+        "name": "Battery SOH"
+      },
+      "battery_power": {
+        "name": "Battery Power"
+      },
+      "battery_voltage": {
+        "name": "Battery Voltage"
+      },
+      "battery_current": {
+        "name": "Battery Current"
+      },
+      "battery_charge_today_energy": {
+        "name": "Battery Charge Today"
+      },
+      "battery_charge_total_energy": {
+        "name": "Battery Charge Total"
+      },
+      "battery_discharge_today_energy": {
+        "name": "Battery Discharge Today"
+      },
+      "battery_discharge_total_energy": {
+        "name": "Battery Discharge Total"
+      },
+      "home_load_power": {
+        "name": "Home Load Power"
+      },
+      "total_load_power": {
+        "name": "Total Load Power"
+      },
+      "bypass_load_power": {
+        "name": "Bypass Load Power"
+      },
+      "home_load_today_energy": {
+        "name": "Home Load Today"
+      },
+      "home_load_total_energy": {
+        "name": "Home Load Total"
+      },
+      "backup_load_today_energy": {
+        "name": "Backup Load Today"
+      },
+      "backup_load_total_energy": {
+        "name": "Backup Load Total"
+      },
+      "grid_import_today_energy": {
+        "name": "Grid Import Today"
+      },
+      "grid_import_total_energy": {
+        "name": "Grid Import Total"
+      },
+      "grid_export_today_energy": {
+        "name": "Grid Export Today"
+      },
+      "grid_export_total_energy": {
+        "name": "Grid Export Total"
+      },
+      "collector_state": {
+        "name": "Collector State",
         "state": {
+          "online": "Online",
           "offline": "Offline",
-          "standby": "Standby",
-          "generating": "Generating"
+          "unknown": "Unknown"
         }
       }
     }
