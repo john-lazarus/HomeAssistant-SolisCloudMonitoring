@@ -230,7 +230,7 @@ def _fallback_float(data: dict[str, Any], *keys: str) -> float | None:
 def _pv_string_sensors(
     start: int = 3, stop: int = 24
 ) -> tuple[SolisSensorEntityDescription, ...]:
-    """Build extra PV string sensors based on solis-sensor's uPv/iPv/pow map."""
+    """Build extra PV string sensors from SolisCloud's uPv/iPv/pow field pattern."""
     sensors: list[SolisSensorEntityDescription] = []
     for index in range(start, stop + 1):
         sensors.extend(

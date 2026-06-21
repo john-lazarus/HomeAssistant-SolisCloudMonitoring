@@ -23,6 +23,8 @@ Unsupported model-specific values become unavailable/empty; they should not brea
 
 ## Features
 
+This integration is intentionally small and telemetry-focused: modern Home Assistant entities, a simple coordinator-based poller, no control stack, and no legacy portal compatibility layer. The goal is fast, lightweight SolisCloud monitoring with clear entity names and low maintenance overhead.
+
 - Polls the Solis Cloud `/v1/api/inverterDetail` endpoint every 60 seconds, with `/v1/api/stationDetail` as a fallback source for station-level grid/load energy values.
 - Discovers up to five inverters linked to the API user automatically.
 - Supports clean v2 sensors for inverter production, PV strings, grid AC, battery/storage, load/backup, and grid import/export telemetry.

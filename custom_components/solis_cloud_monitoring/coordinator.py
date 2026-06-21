@@ -19,7 +19,7 @@ def _merge_station_detail(
 ) -> dict[str, Any]:
     """Return inverter detail plus namespaced station-level Solis fields.
 
-    hultenvp/solis-sensor reads both inverterDetail and stationDetail. Keep
+    Some useful Solis values are only exposed at station scope. Keep
     inverterDetail authoritative and add station fields under a prefix so same
     named keys cannot silently overwrite inverter telemetry.
     """

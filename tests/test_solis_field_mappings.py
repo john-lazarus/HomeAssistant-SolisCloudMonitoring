@@ -213,7 +213,7 @@ def test_battery_power_gets_discharge_sign_from_storage_current():
     )
 
 
-def test_pv_string_sensors_extend_to_pv24_like_solis_sensor():
+def test_pv_string_sensors_extend_to_pv24():
     assert sensor_value("pv24_voltage", {"uPv24": "620.5"}) == 620.5
     assert sensor_value("pv24_current", {"iPv24": "8.1"}) == 8.1
     assert sensor_value("pv24_power", {"Pow24": "5010"}) == 5010
