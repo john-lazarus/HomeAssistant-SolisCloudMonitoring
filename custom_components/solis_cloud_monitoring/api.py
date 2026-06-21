@@ -1,4 +1,5 @@
 """API client for Solis Cloud."""
+
 from __future__ import annotations
 
 import asyncio
@@ -12,7 +13,12 @@ from typing import Any
 
 import aiohttp
 
-from .const import API_BASE_URL, API_INVERTER_DETAIL, API_INVERTER_LIST
+from .const import (
+    API_BASE_URL,
+    API_INVERTER_DETAIL,
+    API_INVERTER_LIST,
+    API_STATION_DETAIL,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,7 +37,7 @@ class SolisCloudAPI:
         session: aiohttp.ClientSession,
     ) -> None:
         """Initialize the API client.
-        
+
         Args:
             api_key: Solis Cloud API key
             api_secret: Solis Cloud API secret
@@ -43,11 +49,11 @@ class SolisCloudAPI:
 
     def _generate_headers(self, body: str, endpoint: str) -> dict[str, str]:
         """Generate authentication headers for API request.
-        
+
         Args:
             body: JSON request body
             endpoint: API endpoint path
-            
+
         Returns:
             Dictionary of HTTP headers
         """
@@ -84,14 +90,14 @@ class SolisCloudAPI:
         self, endpoint: str, payload: dict[str, Any]
     ) -> dict[str, Any] | None:
         """Make authenticated API request.
-        
+
         Args:
             endpoint: API endpoint path
             payload: Request payload
-            
+
         Returns:
             Response data or None on error
-            
+
         Raises:
             SolisCloudAPIError: On API or network errors
         """
@@ -131,10 +137,10 @@ class SolisCloudAPI:
 
     async def get_inverter_list(self) -> list[dict[str, Any]]:
         """Get list of all inverters on the account.
-        
+
         Returns:
             List of inverter information dictionaries
-            
+
         Raises:
             SolisCloudAPIError: On API or network errors
         """
@@ -149,22 +155,32 @@ class SolisCloudAPI:
 
     async def get_inverter_details(self, serial_number: str) -> dict[str, Any]:
         """Get detailed information for a specific inverter.
-        
+
         Args:
             serial_number: Inverter serial number
-            
+
         Returns:
             Inverter details dictionary
-            
+
         Raises:
             SolisCloudAPIError: On API or network errors
         """
         data = await self._request(API_INVERTER_DETAIL, {"sn": serial_number})
 
         if not data:
-            raise SolisCloudAPIError(
-                f"No data returned for inverter {serial_number}"
-            )
+            raise SolisCloudAPIError(f"No data returned for inverter {serial_number}")
 
         _LOGGER.debug("Retrieved details for inverter %s", serial_number)
+        return data
+
+    async def get_station_details(self, station_id: str) -> dict[str, Any]:
+        """Get plant/station level data used for grid/load energy fallbacks."""
+        data = await self._request(API_STATION_DETAIL, {"id": station_id})
+
+        if not data:
+            raise SolisCloudAPIError(
+                f"No station data returned for station {station_id}"
+            )
+
+        _LOGGER.debug("Retrieved station details for station %s", station_id)
         return data

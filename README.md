@@ -23,7 +23,7 @@ Unsupported model-specific values become unavailable/empty; they should not brea
 
 ## Features
 
-- Polls the Solis Cloud `/v1/api/inverterDetail` endpoint every 60 seconds.
+- Polls the Solis Cloud `/v1/api/inverterDetail` endpoint every 60 seconds, with `/v1/api/stationDetail` as a fallback source for station-level grid/load energy values.
 - Discovers up to five inverters linked to the API user automatically.
 - Supports clean v2 sensors for inverter production, PV strings, grid AC, battery/storage, load/backup, and grid import/export telemetry.
 - Adds conservative night-noise handling for tiny phantom AC production values when PV/DC evidence indicates no generation.
@@ -103,6 +103,7 @@ Each inverter appears as a separate Home Assistant device with manufacturer, mod
 
 - `pv1_voltage` V, `pv1_current` A, `pv1_power` W
 - `pv2_voltage` V, `pv2_current` A, `pv2_power` W
+- `pv3_*` through `pv24_*` are also created for larger multi-string inverters when SolisCloud reports those fields
 
 ### Grid AC
 
@@ -137,8 +138,12 @@ Each inverter appears as a separate Home Assistant device with manufacturer, mod
 ### Grid import/export, supported models only
 
 - `grid_import_today_energy` kWh
+- `grid_import_month_energy` kWh
+- `grid_import_year_energy` kWh
 - `grid_import_total_energy` kWh
 - `grid_export_today_energy` kWh
+- `grid_export_month_energy` kWh
+- `grid_export_year_energy` kWh
 - `grid_export_total_energy` kWh
 
 ### Diagnostics

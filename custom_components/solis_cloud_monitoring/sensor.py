@@ -1,4 +1,5 @@
 """Sensor platform for Solis Cloud Monitoring v2."""
+
 from __future__ import annotations
 
 import logging
@@ -134,8 +135,6 @@ def _energy_to_kwh(
     return value
 
 
-
-
 def _hide_grid_only_zero(data: dict[str, Any], value: float | None) -> float | None:
     """Hide zero-valued hybrid/storage fields on explicit grid-only models.
 
@@ -179,6 +178,7 @@ def _model_float(data: dict[str, Any], *keys: str) -> float | None:
     """Return optional model-specific float, hiding unsupported grid-only zeros."""
     return _hide_grid_only_zero(data, _fallback_float(data, *keys))
 
+
 def _fallback_power_to_watts(
     data: dict[str, Any],
     candidates: tuple[tuple[str, str | None, str], ...],
@@ -190,9 +190,86 @@ def _fallback_power_to_watts(
     return None
 
 
+def _fallback_energy_to_kwh(
+    data: dict[str, Any],
+    candidates: tuple[tuple[str, str | None, str], ...],
+) -> float | None:
+    """Read the first available same-meaning energy candidate as kWh."""
+    for value_key, unit_key, default_unit in candidates:
+        if data.get(value_key) not in (None, ""):
+            return _energy_to_kwh(data, value_key, unit_key, default_unit)
+    return None
+
+
+def _model_fallback_energy_to_kwh(
+    data: dict[str, Any],
+    candidates: tuple[tuple[str, str | None, str], ...],
+) -> float | None:
+    """Return optional model-specific energy from candidate fields."""
+    return _hide_grid_only_zero(data, _fallback_energy_to_kwh(data, candidates))
+
+
+def _signed_battery_power_to_watts(data: dict[str, Any]) -> float | None:
+    """Return battery power, applying Solis current sign when available."""
+    power = _model_power_to_watts(data, "batteryPower", "batteryPowerStr", "kW")
+    current = _fallback_float(
+        data, "storageBatteryCurrent", "bstteryCurrent", "batteryCurrent"
+    )
+    if power is not None and current is not None and current < 0:
+        return -abs(power)
+    if power is not None and current is not None and current > 0:
+        return abs(power)
+    return power
+
+
 def _fallback_float(data: dict[str, Any], *keys: str) -> float | None:
     """Read first available numeric field from same-meaning candidates."""
     return _first_float(data, *keys)
+
+
+def _pv_string_sensors(
+    start: int = 3, stop: int = 24
+) -> tuple[SolisSensorEntityDescription, ...]:
+    """Build extra PV string sensors based on solis-sensor's uPv/iPv/pow map."""
+    sensors: list[SolisSensorEntityDescription] = []
+    for index in range(start, stop + 1):
+        sensors.extend(
+            (
+                SolisSensorEntityDescription(
+                    key=f"pv{index}_voltage",
+                    translation_key=f"pv{index}_voltage",
+                    name=f"PV String {index} Voltage",
+                    native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+                    device_class=SensorDeviceClass.VOLTAGE,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    suggested_display_precision=1,
+                    value_fn=lambda data, i=index: _fallback_float(data, f"uPv{i}"),
+                ),
+                SolisSensorEntityDescription(
+                    key=f"pv{index}_current",
+                    translation_key=f"pv{index}_current",
+                    name=f"PV String {index} Current",
+                    native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+                    device_class=SensorDeviceClass.CURRENT,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    suggested_display_precision=1,
+                    value_fn=lambda data, i=index: _fallback_float(data, f"iPv{i}"),
+                ),
+                SolisSensorEntityDescription(
+                    key=f"pv{index}_power",
+                    translation_key=f"pv{index}_power",
+                    name=f"PV String {index} Power",
+                    native_unit_of_measurement=UnitOfPower.WATT,
+                    device_class=SensorDeviceClass.POWER,
+                    state_class=SensorStateClass.MEASUREMENT,
+                    suggested_display_precision=0,
+                    value_fn=lambda data, i=index: _fallback_float(
+                        data, f"pow{i}", f"Pow{i}"
+                    ),
+                ),
+            )
+        )
+    return tuple(sensors)
 
 
 def _total_pv_power_watts(data: dict[str, Any]) -> float:
@@ -391,6 +468,7 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         suggested_display_precision=0,
         value_fn=lambda data: _fallback_float(data, "pow2", "Pow2"),
     ),
+    *_pv_string_sensors(3, 24),
     # Grid AC / meter values exposed by inverterDetail
     SolisSensorEntityDescription(
         key="grid_l1_voltage",
@@ -503,7 +581,7 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=0,
-        value_fn=lambda data: _model_power_to_watts(data, "batteryPower", "batteryPowerStr", "kW"),
+        value_fn=_signed_battery_power_to_watts,
     ),
     SolisSensorEntityDescription(
         key="battery_voltage",
@@ -513,7 +591,9 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.VOLTAGE,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=2,
-        value_fn=lambda data: _model_float(data, "storageBatteryVoltage", "batteryVoltage"),
+        value_fn=lambda data: _model_float(
+            data, "storageBatteryVoltage", "batteryVoltage"
+        ),
     ),
     SolisSensorEntityDescription(
         key="battery_current",
@@ -523,7 +603,9 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.CURRENT,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=2,
-        value_fn=lambda data: _model_float(data, "storageBatteryCurrent", "bstteryCurrent"),
+        value_fn=lambda data: _model_float(
+            data, "storageBatteryCurrent", "bstteryCurrent"
+        ),
     ),
     SolisSensorEntityDescription(
         key="battery_charge_today_energy",
@@ -533,7 +615,9 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=2,
-        value_fn=lambda data: _model_energy_to_kwh(data, "batteryTodayChargeEnergy", "batteryTodayChargeEnergyStr", "kWh"),
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "batteryTodayChargeEnergy", "batteryTodayChargeEnergyStr", "kWh"
+        ),
     ),
     SolisSensorEntityDescription(
         key="battery_charge_total_energy",
@@ -543,7 +627,9 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=2,
-        value_fn=lambda data: _model_energy_to_kwh(data, "batteryTotalChargeEnergy", "batteryTotalChargeEnergyStr", "kWh"),
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "batteryTotalChargeEnergy", "batteryTotalChargeEnergyStr", "kWh"
+        ),
     ),
     SolisSensorEntityDescription(
         key="battery_discharge_today_energy",
@@ -553,7 +639,9 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=2,
-        value_fn=lambda data: _model_energy_to_kwh(data, "batteryTodayDischargeEnergy", "batteryTodayDischargeEnergyStr", "kWh"),
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "batteryTodayDischargeEnergy", "batteryTodayDischargeEnergyStr", "kWh"
+        ),
     ),
     SolisSensorEntityDescription(
         key="battery_discharge_total_energy",
@@ -563,7 +651,9 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=2,
-        value_fn=lambda data: _model_energy_to_kwh(data, "batteryTotalDischargeEnergy", "batteryTotalDischargeEnergyStr", "kWh"),
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "batteryTotalDischargeEnergy", "batteryTotalDischargeEnergyStr", "kWh"
+        ),
     ),
     # Load / backup values
     SolisSensorEntityDescription(
@@ -574,7 +664,9 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=0,
-        value_fn=lambda data: _model_power_to_watts(data, "familyLoadPower", "familyLoadPowerStr", "kW"),
+        value_fn=lambda data: _model_power_to_watts(
+            data, "familyLoadPower", "familyLoadPowerStr", "kW"
+        ),
     ),
     SolisSensorEntityDescription(
         key="total_load_power",
@@ -584,7 +676,9 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=0,
-        value_fn=lambda data: _model_power_to_watts(data, "totalLoadPower", "totalLoadPowerStr", "kW"),
+        value_fn=lambda data: _model_power_to_watts(
+            data, "totalLoadPower", "totalLoadPowerStr", "kW"
+        ),
     ),
     SolisSensorEntityDescription(
         key="bypass_load_power",
@@ -594,7 +688,9 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=0,
-        value_fn=lambda data: _model_power_to_watts(data, "bypassLoadPower", "bypassLoadPowerStr", "kW"),
+        value_fn=lambda data: _model_power_to_watts(
+            data, "bypassLoadPower", "bypassLoadPowerStr", "kW"
+        ),
     ),
     SolisSensorEntityDescription(
         key="home_load_today_energy",
@@ -604,7 +700,18 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=2,
-        value_fn=lambda data: _model_energy_to_kwh(data, "homeLoadTodayEnergy", "homeLoadTodayEnergyStr", "kWh"),
+        value_fn=lambda data: _model_fallback_energy_to_kwh(
+            data,
+            (
+                ("homeLoadTodayEnergy", "homeLoadTodayEnergyStr", "kWh"),
+                ("station_homeLoadEnergy", "station_homeLoadEnergyStr", "kWh"),
+                (
+                    "station_homeLoadTodayEnergy",
+                    "station_homeLoadTodayEnergyStr",
+                    "kWh",
+                ),
+            ),
+        ),
     ),
     SolisSensorEntityDescription(
         key="home_load_total_energy",
@@ -614,7 +721,9 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=2,
-        value_fn=lambda data: _model_energy_to_kwh(data, "homeLoadTotalEnergy", "homeLoadTotalEnergyStr", "kWh"),
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "homeLoadTotalEnergy", "homeLoadTotalEnergyStr", "kWh"
+        ),
     ),
     SolisSensorEntityDescription(
         key="backup_load_today_energy",
@@ -624,7 +733,9 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=2,
-        value_fn=lambda data: _model_energy_to_kwh(data, "backupTodayEnergy", "backupTodayEnergyStr", "kWh"),
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "backupTodayEnergy", "backupTodayEnergyStr", "kWh"
+        ),
     ),
     SolisSensorEntityDescription(
         key="backup_load_total_energy",
@@ -634,7 +745,9 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=2,
-        value_fn=lambda data: _model_energy_to_kwh(data, "backupTotalEnergy", "backupTotalEnergyStr", "kWh"),
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "backupTotalEnergy", "backupTotalEnergyStr", "kWh"
+        ),
     ),
     # Grid import/export energy
     SolisSensorEntityDescription(
@@ -645,7 +758,17 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=2,
-        value_fn=lambda data: _model_energy_to_kwh(data, "gridPurchasedTodayEnergy", "gridPurchasedTodayEnergyStr", "kWh"),
+        value_fn=lambda data: _model_fallback_energy_to_kwh(
+            data,
+            (
+                ("gridPurchasedTodayEnergy", "gridPurchasedTodayEnergyStr", "kWh"),
+                (
+                    "station_gridPurchasedDayEnergy",
+                    "station_gridPurchasedDayEnergyStr",
+                    "kWh",
+                ),
+            ),
+        ),
     ),
     SolisSensorEntityDescription(
         key="grid_import_total_energy",
@@ -655,7 +778,9 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=2,
-        value_fn=lambda data: _model_energy_to_kwh(data, "gridPurchasedTotalEnergy", "gridPurchasedTotalEnergyStr", "kWh"),
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "gridPurchasedTotalEnergy", "gridPurchasedTotalEnergyStr", "kWh"
+        ),
     ),
     SolisSensorEntityDescription(
         key="grid_export_today_energy",
@@ -665,7 +790,13 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=2,
-        value_fn=lambda data: _model_energy_to_kwh(data, "gridSellTodayEnergy", "gridSellTodayEnergyStr", "kWh"),
+        value_fn=lambda data: _model_fallback_energy_to_kwh(
+            data,
+            (
+                ("gridSellTodayEnergy", "gridSellTodayEnergyStr", "kWh"),
+                ("station_gridSellDayEnergy", "station_gridSellDayEnergyStr", "kWh"),
+            ),
+        ),
     ),
     SolisSensorEntityDescription(
         key="grid_export_total_energy",
@@ -675,7 +806,85 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=2,
-        value_fn=lambda data: _model_energy_to_kwh(data, "gridSellTotalEnergy", "gridSellTotalEnergyStr", "kWh"),
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "gridSellTotalEnergy", "gridSellTotalEnergyStr", "kWh"
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="grid_import_month_energy",
+        translation_key="grid_import_month_energy",
+        name="Grid Import This Month",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_fallback_energy_to_kwh(
+            data,
+            (
+                ("gridPurchasedMonthEnergy", "gridPurchasedMonthEnergyStr", "kWh"),
+                (
+                    "station_gridPurchasedMonthEnergy",
+                    "station_gridPurchasedMonthEnergyStr",
+                    "kWh",
+                ),
+            ),
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="grid_import_year_energy",
+        translation_key="grid_import_year_energy",
+        name="Grid Import This Year",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_fallback_energy_to_kwh(
+            data,
+            (
+                ("gridPurchasedYearEnergy", "gridPurchasedYearEnergyStr", "kWh"),
+                (
+                    "station_gridPurchasedYearEnergy",
+                    "station_gridPurchasedYearEnergyStr",
+                    "kWh",
+                ),
+            ),
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="grid_export_month_energy",
+        translation_key="grid_export_month_energy",
+        name="Grid Export This Month",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_fallback_energy_to_kwh(
+            data,
+            (
+                ("gridSellMonthEnergy", "gridSellMonthEnergyStr", "kWh"),
+                (
+                    "station_gridSellMonthEnergy",
+                    "station_gridSellMonthEnergyStr",
+                    "kWh",
+                ),
+            ),
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="grid_export_year_energy",
+        translation_key="grid_export_year_energy",
+        name="Grid Export This Year",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_fallback_energy_to_kwh(
+            data,
+            (
+                ("gridSellYearEnergy", "gridSellYearEnergyStr", "kWh"),
+                ("station_gridSellYearEnergy", "station_gridSellYearEnergyStr", "kWh"),
+            ),
+        ),
     ),
     # Diagnostics
     SolisSensorEntityDescription(
@@ -685,7 +894,13 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENUM,
         entity_category=EntityCategory.DIAGNOSTIC,
         options=["online", "offline", "unknown"],
-        value_fn=lambda data: None if data.get("collectorState") in (None, "") else {"1": "online", "2": "offline"}.get(str(data.get("collectorState")), "unknown"),
+        value_fn=lambda data: (
+            None
+            if data.get("collectorState") in (None, "")
+            else {"1": "online", "2": "offline"}.get(
+                str(data.get("collectorState")), "unknown"
+            )
+        ),
     ),
 )
 
@@ -706,7 +921,9 @@ async def async_setup_entry(
     async_add_entities(entities)
 
 
-class SolisCloudSensor(CoordinatorEntity[SolisCloudDataUpdateCoordinator], SensorEntity):
+class SolisCloudSensor(
+    CoordinatorEntity[SolisCloudDataUpdateCoordinator], SensorEntity
+):
     """Representation of a Solis Cloud sensor."""
 
     entity_description: SolisSensorEntityDescription

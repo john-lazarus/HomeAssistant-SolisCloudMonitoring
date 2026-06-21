@@ -1,4 +1,5 @@
 """Data update coordinator for Solis Cloud Monitoring."""
+
 from __future__ import annotations
 
 import logging
@@ -13,6 +14,25 @@ from .const import DEFAULT_SCAN_INTERVAL, DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 
+def _merge_station_detail(
+    inverter_data: dict[str, Any], station_data: dict[str, Any] | None
+) -> dict[str, Any]:
+    """Return inverter detail plus namespaced station-level Solis fields.
+
+    hultenvp/solis-sensor reads both inverterDetail and stationDetail. Keep
+    inverterDetail authoritative and add station fields under a prefix so same
+    named keys cannot silently overwrite inverter telemetry.
+    """
+    merged = dict(inverter_data)
+    if not station_data:
+        return merged
+
+    for key, value in station_data.items():
+        if value not in (None, ""):
+            merged[f"station_{key}"] = value
+    return merged
+
+
 class SolisCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, dict[str, Any]]]):
     """Class to manage fetching Solis Cloud data."""
 
@@ -22,13 +42,7 @@ class SolisCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, dict[str, 
         api: SolisCloudAPI,
         inverter_serials: list[str],
     ) -> None:
-        """Initialize the coordinator.
-        
-        Args:
-            hass: Home Assistant instance
-            api: Solis Cloud API client
-            inverter_serials: List of inverter serial numbers to monitor
-        """
+        """Initialize the coordinator."""
         super().__init__(
             hass,
             _LOGGER,
@@ -39,25 +53,40 @@ class SolisCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, dict[str, 
         self.inverter_serials = inverter_serials
 
     async def _async_update_data(self) -> dict[str, dict[str, Any]]:
-        """Fetch data from Solis Cloud API.
-        
-        Returns:
-            Dictionary mapping serial numbers to inverter data
-            
-        Raises:
-            UpdateFailed: When update fails
-        """
+        """Fetch data from Solis Cloud API."""
         data: dict[str, dict[str, Any]] = {}
+        station_cache: dict[str, dict[str, Any] | None] = {}
 
         try:
-            # Fetch data for each inverter
             for serial in self.inverter_serials:
                 try:
                     inverter_data = await self.api.get_inverter_details(serial)
+                    station_data = None
+                    station_id = inverter_data.get("stationId")
+                    if station_id not in (None, ""):
+                        station_id = str(station_id)
+                        if station_id not in station_cache:
+                            try:
+                                station_cache[station_id] = (
+                                    await self.api.get_station_details(station_id)
+                                )
+                            except SolisCloudAPIError as err:
+                                station_cache[station_id] = None
+                                _LOGGER.debug(
+                                    "Failed to update station %s details: %s",
+                                    station_id,
+                                    err,
+                                )
+                        station_data = station_cache[station_id]
+
+                    inverter_data = _merge_station_detail(inverter_data, station_data)
                     data[serial] = inverter_data
+
                     pac_value = inverter_data.get("pac")
                     try:
-                        pac_float = float(pac_value) if pac_value not in (None, "") else None
+                        pac_float = (
+                            float(pac_value) if pac_value not in (None, "") else None
+                        )
                     except (TypeError, ValueError):
                         pac_float = None
 
@@ -70,10 +99,7 @@ class SolisCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, dict[str, 
                     else:
                         _LOGGER.debug("Updated data for inverter %s", serial)
                 except SolisCloudAPIError as err:
-                    _LOGGER.warning(
-                        "Failed to update inverter %s: %s", serial, err
-                    )
-                    # Continue with other inverters even if one fails
+                    _LOGGER.warning("Failed to update inverter %s: %s", serial, err)
                     continue
 
             if not data:
@@ -82,4 +108,6 @@ class SolisCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, dict[str, 
             return data
 
         except SolisCloudAPIError as err:
-            raise UpdateFailed(f"Error communicating with Solis Cloud API: {err}") from err
+            raise UpdateFailed(
+                f"Error communicating with Solis Cloud API: {err}"
+            ) from err
