@@ -1,4 +1,5 @@
 """Constants for the Solis Cloud Monitoring integration."""
+
 from datetime import timedelta
 from typing import Final
 
@@ -13,6 +14,7 @@ CONF_INVERTER_SERIALS: Final = "inverter_serials"
 API_BASE_URL: Final = "https://www.soliscloud.com:13333"
 API_INVERTER_LIST: Final = "/v1/api/inverterList"
 API_INVERTER_DETAIL: Final = "/v1/api/inverterDetail"
+API_STATION_DETAIL: Final = "/v1/api/stationDetail"
 
 # Limits
 MAX_INVERTERS: Final = 5
