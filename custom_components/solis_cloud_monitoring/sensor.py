@@ -288,6 +288,27 @@ def _total_pv_power_watts(data: dict[str, Any]) -> float:
     return total if found else 0.0
 
 
+def _has_no_generation_evidence(data: dict[str, Any]) -> bool:
+    """Return true when power fields are present and show no PV generation."""
+    pac_present = data.get("pac") not in (None, "")
+    dc_present = data.get("dcPac") not in (None, "")
+    pv_present = any(
+        data.get(f"pow{index}") not in (None, "")
+        or data.get(f"Pow{index}") not in (None, "")
+        for index in range(1, 33)
+    )
+    if not (pac_present or dc_present or pv_present):
+        return False
+
+    pac_w = _power_to_watts(data, "pac", "pacStr", "kW")
+    dc_w = _power_to_watts(data, "dcPac", "dcPacStr", "W")
+    pv_w = _total_pv_power_watts(data)
+
+    return (pac_w is None or abs(pac_w) <= 30) and (
+        dc_w is None or abs(dc_w) <= 10
+    ) and abs(pv_w) <= 10
+
+
 def _inverter_ac_power_watts(data: dict[str, Any]) -> float | None:
     """Return inverter AC power, with conservative night noise suppression."""
     pac_w = _power_to_watts(data, "pac", "pacStr", "kW")
@@ -296,13 +317,25 @@ def _inverter_ac_power_watts(data: dict[str, Any]) -> float | None:
 
     # SolisCloud can report tiny positive standby/noise values at night. Treat
     # <=30 W as zero only when DC/PV evidence also says there is no production.
-    if 0 < pac_w <= 30:
-        dc_w = _power_to_watts(data, "dcPac", "dcPacStr", "W")
-        pv_w = _total_pv_power_watts(data)
-        if (dc_w is None or abs(dc_w) <= 10) and abs(pv_w) <= 10:
-            return 0.0
+    if 0 < pac_w <= 30 and _has_no_generation_evidence(data):
+        return 0.0
 
     return pac_w
+
+
+def _today_generation_energy_to_kwh(data: dict[str, Any]) -> float | None:
+    """Return today's generation, hiding stale wake-up readings."""
+    value = _energy_to_kwh(data, "eToday", "eTodayStr", "kWh")
+    if value is None:
+        return None
+
+    # Some SolisCloud accounts briefly return yesterday's eToday value when the
+    # inverter wakes up, before the daily counter resets. If the power fields
+    # show no real generation, do not feed that stale value into HA statistics.
+    if value > 0 and _has_no_generation_evidence(data):
+        return None
+
+    return value
 
 
 def _inverter_state(data: dict[str, Any]) -> str:
@@ -347,7 +380,7 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=2,
-        value_fn=lambda data: _energy_to_kwh(data, "eToday", "eTodayStr", "kWh"),
+        value_fn=_today_generation_energy_to_kwh,
     ),
     SolisSensorEntityDescription(
         key="inverter_generation_month_energy",
@@ -367,7 +400,7 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=2,
-        value_fn=lambda data: _energy_to_kwh(data, "eYear", "eYearStr", "MWh"),
+        value_fn=lambda data: _energy_to_kwh(data, "eYear", "eYearStr", "kWh"),
     ),
     SolisSensorEntityDescription(
         key="inverter_generation_total_energy",
@@ -377,7 +410,7 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
         suggested_display_precision=2,
-        value_fn=lambda data: _energy_to_kwh(data, "eTotal", "eTotalStr", "MWh"),
+        value_fn=lambda data: _energy_to_kwh(data, "eTotal", "eTotalStr", "kWh"),
     ),
     SolisSensorEntityDescription(
         key="inverter_temperature",
