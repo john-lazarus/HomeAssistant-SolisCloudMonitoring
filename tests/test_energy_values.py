@@ -118,6 +118,33 @@ def value_for(key: str, data: dict[str, Any]) -> Any:
 
 
 class EnergyValueTests(unittest.TestCase):
+    def test_ac_power_suppresses_002_kw_standby_noise(self) -> None:
+        value = value_for(
+            "inverter_ac_power",
+            {
+                "pac": "0.02",
+                "pacStr": "kW",
+                "dcPac": "0.02",
+                "dcPacStr": "kW",
+                "pow1": "0",
+            },
+        )
+
+        self.assertEqual(value, 0.0)
+
+    def test_ac_power_keeps_real_low_generation(self) -> None:
+        value = value_for(
+            "inverter_ac_power",
+            {
+                "pac": "0.02",
+                "pacStr": "kW",
+                "dcPac": "0.05",
+                "dcPacStr": "kW",
+                "pow1": "50",
+            },
+        )
+
+        self.assertEqual(value, 20.0)
     def test_today_generation_is_unavailable_for_stale_morning_no_generation_reading(self) -> None:
         value = value_for(
             "inverter_generation_today_energy",

@@ -35,6 +35,8 @@ from .coordinator import SolisCloudDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
+_NIGHT_NOISE_POWER_W = 30.0
+
 
 @dataclass(frozen=True, kw_only=True)
 class SolisSensorEntityDescription(SensorEntityDescription):
@@ -304,8 +306,8 @@ def _has_no_generation_evidence(data: dict[str, Any]) -> bool:
     dc_w = _power_to_watts(data, "dcPac", "dcPacStr", "W")
     pv_w = _total_pv_power_watts(data)
 
-    return (pac_w is None or abs(pac_w) <= 30) and (
-        dc_w is None or abs(dc_w) <= 10
+    return (pac_w is None or abs(pac_w) <= _NIGHT_NOISE_POWER_W) and (
+        dc_w is None or abs(dc_w) <= _NIGHT_NOISE_POWER_W
     ) and abs(pv_w) <= 10
 
 
