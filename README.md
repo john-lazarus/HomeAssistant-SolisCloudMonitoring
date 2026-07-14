@@ -90,6 +90,10 @@ Please open an [issue](https://github.com/john-lazarus/HomeAssistant-SolisCloudM
 
 Please remove serial numbers, station IDs, logger IDs, user IDs, locations, API keys, signatures, and other credentials. Keep the field names and numeric telemetry values; those are what make the problem diagnosable.
 
+## Support
+
+If this integration is useful, you can [buy me a coffee](https://buymeacoffee.com/trusmith).
+
 ## Links
 
 - [Issues](https://github.com/john-lazarus/HomeAssistant-SolisCloudMonitoring/issues)
