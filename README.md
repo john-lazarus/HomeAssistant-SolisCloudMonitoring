@@ -4,6 +4,12 @@ A Home Assistant integration for reading inverter data from Solis Cloud.
 
 It polls Solis Cloud every 60 seconds and creates normal Home Assistant sensors for each inverter it finds. It is read-only: there are no inverter controls in this integration.
 
+<p align="center">
+  <a href="https://buymeacoffee.com/trusmith">
+    <img src="https://cdn.buymeacoffee.com/buttons/v2/arial-orange.png" alt="Buy Me a Coffee" height="41">
+  </a>
+</p>
+
 ## Install with HACS
 
 [![Open this repository in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=john-lazarus&repository=HomeAssistant-SolisCloudMonitoring&category=integration)
@@ -89,10 +95,6 @@ Please open an [issue](https://github.com/john-lazarus/HomeAssistant-SolisCloudM
 - Relevant Home Assistant logs from `custom_components.solis_cloud_monitoring`
 
 Please remove serial numbers, station IDs, logger IDs, user IDs, locations, API keys, signatures, and other credentials. Keep the field names and numeric telemetry values; those are what make the problem diagnosable.
-
-## Support
-
-If this integration is useful, you can [buy me a coffee](https://buymeacoffee.com/trusmith).
 
 ## Links
 
