@@ -132,6 +132,20 @@ class EnergyValueTests(unittest.TestCase):
 
         self.assertEqual(value, 0.0)
 
+    def test_ac_power_suppresses_observed_night_pv_noise(self) -> None:
+        value = value_for(
+            "inverter_ac_power",
+            {
+                "pac": "0.02",
+                "pacStr": "kW",
+                "dcPac": "0.026",
+                "dcPacStr": "kW",
+                "pow1": "22",
+            },
+        )
+
+        self.assertEqual(value, 0.0)
+
     def test_ac_power_keeps_real_low_generation(self) -> None:
         value = value_for(
             "inverter_ac_power",

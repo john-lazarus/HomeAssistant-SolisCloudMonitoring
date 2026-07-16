@@ -308,7 +308,7 @@ def _has_no_generation_evidence(data: dict[str, Any]) -> bool:
 
     return (pac_w is None or abs(pac_w) <= _NIGHT_NOISE_POWER_W) and (
         dc_w is None or abs(dc_w) <= _NIGHT_NOISE_POWER_W
-    ) and abs(pv_w) <= 10
+    ) and abs(pv_w) <= _NIGHT_NOISE_POWER_W
 
 
 def _inverter_ac_power_watts(data: dict[str, Any]) -> float | None:
