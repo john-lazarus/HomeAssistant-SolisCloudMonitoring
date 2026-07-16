@@ -146,6 +146,22 @@ class EnergyValueTests(unittest.TestCase):
 
         self.assertEqual(value, 0.0)
 
+    def test_ac_power_suppresses_synchronized_39w_dc_35w_pv_night_sample(
+        self,
+    ) -> None:
+        value = value_for(
+            "inverter_ac_power",
+            {
+                "pac": "0.02",
+                "pacStr": "kW",
+                "dcPac": "39",
+                "dcPacStr": "W",
+                "pow1": "35",
+            },
+        )
+
+        self.assertEqual(value, 0.0)
+
     def test_ac_power_keeps_real_low_generation(self) -> None:
         value = value_for(
             "inverter_ac_power",

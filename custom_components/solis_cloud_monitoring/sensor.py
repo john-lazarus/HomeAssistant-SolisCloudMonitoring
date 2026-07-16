@@ -35,7 +35,7 @@ from .coordinator import SolisCloudDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-_NIGHT_NOISE_POWER_W = 30.0
+_NIGHT_NOISE_POWER_W = 40.0
 
 
 @dataclass(frozen=True, kw_only=True)
