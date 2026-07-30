@@ -16,11 +16,13 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
     PERCENTAGE,
+    UnitOfApparentPower,
     UnitOfElectricCurrent,
     UnitOfElectricPotential,
     UnitOfEnergy,
     UnitOfFrequency,
     UnitOfPower,
+    UnitOfReactivePower,
     UnitOfTemperature,
     UnitOfTime,
 )
@@ -526,6 +528,45 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         value_fn=lambda data: _fallback_float(data, "iAc1", "iA"),
     ),
     SolisSensorEntityDescription(
+        key="grid_l1_power",
+        translation_key="grid_l1_power",
+        name="Grid L1 Power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+        value_fn=lambda data: _model_float(data, "pA"),
+    ),
+    SolisSensorEntityDescription(
+        key="grid_l1_reactive_power",
+        translation_key="grid_l1_reactive_power",
+        name="Grid L1 Reactive Power",
+        native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
+        device_class=SensorDeviceClass.REACTIVE_POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+        value_fn=lambda data: _model_float(data, "aReactivePower"),
+    ),
+    SolisSensorEntityDescription(
+        key="grid_l1_apparent_power",
+        translation_key="grid_l1_apparent_power",
+        name="Grid L1 Apparent Power",
+        native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+        device_class=SensorDeviceClass.APPARENT_POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+        value_fn=lambda data: _model_float(data, "aLookedPower"),
+    ),
+    SolisSensorEntityDescription(
+        key="grid_l1_power_factor",
+        translation_key="grid_l1_power_factor",
+        name="Grid L1 Power Factor",
+        device_class=SensorDeviceClass.POWER_FACTOR,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_float(data, "aPhasePowerFactor"),
+    ),
+    SolisSensorEntityDescription(
         key="grid_l2_voltage",
         translation_key="grid_l2_voltage",
         name="Grid L2 Voltage",
@@ -544,6 +585,45 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         state_class=SensorStateClass.MEASUREMENT,
         suggested_display_precision=1,
         value_fn=lambda data: _fallback_float(data, "iAc2", "iB"),
+    ),
+    SolisSensorEntityDescription(
+        key="grid_l2_power",
+        translation_key="grid_l2_power",
+        name="Grid L2 Power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+        value_fn=lambda data: _model_float(data, "pB"),
+    ),
+    SolisSensorEntityDescription(
+        key="grid_l2_reactive_power",
+        translation_key="grid_l2_reactive_power",
+        name="Grid L2 Reactive Power",
+        native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
+        device_class=SensorDeviceClass.REACTIVE_POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+        value_fn=lambda data: _model_float(data, "bReactivePower"),
+    ),
+    SolisSensorEntityDescription(
+        key="grid_l2_apparent_power",
+        translation_key="grid_l2_apparent_power",
+        name="Grid L2 Apparent Power",
+        native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+        device_class=SensorDeviceClass.APPARENT_POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+        value_fn=lambda data: _model_float(data, "bLookedPower"),
+    ),
+    SolisSensorEntityDescription(
+        key="grid_l2_power_factor",
+        translation_key="grid_l2_power_factor",
+        name="Grid L2 Power Factor",
+        device_class=SensorDeviceClass.POWER_FACTOR,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_float(data, "bPhasePowerFactor"),
     ),
     SolisSensorEntityDescription(
         key="grid_l3_voltage",
@@ -565,6 +645,46 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         suggested_display_precision=1,
         value_fn=lambda data: _fallback_float(data, "iAc3", "iC"),
     ),
+    SolisSensorEntityDescription(
+        key="grid_l3_power",
+        translation_key="grid_l3_power",
+        name="Grid L3 Power",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+        value_fn=lambda data: _model_float(data, "pC"),
+    ),
+    SolisSensorEntityDescription(
+        key="grid_l3_reactive_power",
+        translation_key="grid_l3_reactive_power",
+        name="Grid L3 Reactive Power",
+        native_unit_of_measurement=UnitOfReactivePower.VOLT_AMPERE_REACTIVE,
+        device_class=SensorDeviceClass.REACTIVE_POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+        value_fn=lambda data: _model_float(data, "cReactivePower"),
+    ),
+    SolisSensorEntityDescription(
+        key="grid_l3_apparent_power",
+        translation_key="grid_l3_apparent_power",
+        name="Grid L3 Apparent Power",
+        native_unit_of_measurement=UnitOfApparentPower.VOLT_AMPERE,
+        device_class=SensorDeviceClass.APPARENT_POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=1,
+        value_fn=lambda data: _model_float(data, "cLookedPower"),
+    ),
+    SolisSensorEntityDescription(
+        key="grid_l3_power_factor",
+        translation_key="grid_l3_power_factor",
+        name="Grid L3 Power Factor",
+        device_class=SensorDeviceClass.POWER_FACTOR,
+        state_class=SensorStateClass.MEASUREMENT,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_float(data, "cPhasePowerFactor"),
+    ),
+
     SolisSensorEntityDescription(
         key="grid_frequency",
         translation_key="grid_frequency",
@@ -655,6 +775,30 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         ),
     ),
     SolisSensorEntityDescription(
+        key="battery_charge_month_energy",
+        translation_key="battery_charge_month_energy",
+        name="Battery Charge This Month",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "batteryMonthChargeEnergy", "batteryMonthChargeEnergyStr", "kWh"
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="battery_charge_year_energy",
+        translation_key="battery_charge_year_energy",
+        name="Battery Charge This Year",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "batteryYearChargeEnergy", "batteryYearChargeEnergyStr", "kWh"
+        ),
+    ),
+    SolisSensorEntityDescription(
         key="battery_charge_total_energy",
         translation_key="battery_charge_total_energy",
         name="Battery Charge Total",
@@ -676,6 +820,30 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         suggested_display_precision=2,
         value_fn=lambda data: _model_energy_to_kwh(
             data, "batteryTodayDischargeEnergy", "batteryTodayDischargeEnergyStr", "kWh"
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="battery_discharge_month_energy",
+        translation_key="battery_discharge_month_energy",
+        name="Battery Discharge This Month",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "batteryMonthDischargeEnergy", "batteryMonthDischargeEnergyStr", "kWh"
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="battery_discharge_year_energy",
+        translation_key="battery_discharge_year_energy",
+        name="Battery Discharge This Year",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "batteryYearDischargeEnergy", "batteryYearDischargeEnergyStr", "kWh"
         ),
     ),
     SolisSensorEntityDescription(
@@ -749,6 +917,30 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         ),
     ),
     SolisSensorEntityDescription(
+        key="home_load_month_energy",
+        translation_key="home_load_month_energy",
+        name="Home Load This Month",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "homeLoadMonthEnergy", "homeLoadMonthEnergyStr", "kWh"
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="home_load_year_energy",
+        translation_key="home_load_year_energy",
+        name="Home Load This Year",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "homeLoadYearEnergy", "homeLoadYearEnergyStr", "kWh"
+        ),
+    ),
+    SolisSensorEntityDescription(
         key="home_load_total_energy",
         translation_key="home_load_total_energy",
         name="Home Load Total",
@@ -761,6 +953,54 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         ),
     ),
     SolisSensorEntityDescription(
+        key="home_grid_today_energy",
+        translation_key="home_grid_today_energy",
+        name="Home Grid Today",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "homeGridTodayEnergy", "homeGridTodayEnergyStr", "kWh"
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="home_grid_month_energy",
+        translation_key="home_grid_month_energy",
+        name="Home Grid This Month",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "homeGridMonthEnergy", "homeGridMonthEnergyStr", "kWh"
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="home_grid_year_energy",
+        translation_key="home_grid_year_energy",
+        name="Home Grid This Year",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "homeGridYearEnergy", "homeGridYearEnergyStr", "kWh"
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="home_grid_total_energy",
+        translation_key="home_grid_total_energy",
+        name="Home Grid Total",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "homeGridTotalEnergy", "homeGridTotalEnergyStr", "kWh"
+        ),
+    ),
+    SolisSensorEntityDescription(
         key="backup_load_today_energy",
         translation_key="backup_load_today_energy",
         name="Backup Load Today",
@@ -770,6 +1010,30 @@ SENSOR_TYPES: tuple[SolisSensorEntityDescription, ...] = (
         suggested_display_precision=2,
         value_fn=lambda data: _model_energy_to_kwh(
             data, "backupTodayEnergy", "backupTodayEnergyStr", "kWh"
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="backup_load_month_energy",
+        translation_key="backup_load_month_energy",
+        name="Backup Load This Month",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "backupMonthEnergy", "backupMonthEnergyStr", "kWh"
+        ),
+    ),
+    SolisSensorEntityDescription(
+        key="backup_load_year_energy",
+        translation_key="backup_load_year_energy",
+        name="Backup Load This Year",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        suggested_display_precision=2,
+        value_fn=lambda data: _model_energy_to_kwh(
+            data, "backupYearEnergy", "backupYearEnergyStr", "kWh"
         ),
     ),
     SolisSensorEntityDescription(
