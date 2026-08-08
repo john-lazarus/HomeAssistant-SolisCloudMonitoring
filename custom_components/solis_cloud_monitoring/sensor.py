@@ -311,6 +311,11 @@ def _has_no_generation_evidence(data: dict[str, Any]) -> bool:
     ) and abs(pv_w) <= _NIGHT_NOISE_POWER_W
 
 
+def _collector_is_offline(data: dict[str, Any]) -> bool:
+    """Return whether SolisCloud explicitly reports the collector offline."""
+    return str(data.get("collectorState")) == "2"
+
+
 def _inverter_ac_power_watts(data: dict[str, Any]) -> float | None:
     """Return inverter AC power, with conservative night noise suppression."""
     pac_w = _power_to_watts(data, "pac", "pacStr", "kW")
@@ -333,8 +338,13 @@ def _today_generation_energy_to_kwh(data: dict[str, Any]) -> float | None:
 
     # Some SolisCloud accounts briefly return yesterday's eToday value when the
     # inverter wakes up, before the daily counter resets. If the power fields
-    # show no real generation, do not feed that stale value into HA statistics.
-    if value > 0 and _has_no_generation_evidence(data):
+    # show no real generation while the collector is online, do not feed that
+    # stale value into HA statistics. Offline collectors retain the day's total.
+    if (
+        value > 0
+        and not _collector_is_offline(data)
+        and _has_no_generation_evidence(data)
+    ):
         return None
 
     return value
@@ -342,6 +352,8 @@ def _today_generation_energy_to_kwh(data: dict[str, Any]) -> float | None:
 
 def _inverter_state(data: dict[str, Any]) -> str:
     """Map Solis state fields to stable Home Assistant enum values."""
+    if _collector_is_offline(data):
+        return "offline"
     raw = data.get("currentState", data.get("state"))
     if raw in (None, ""):
         return None

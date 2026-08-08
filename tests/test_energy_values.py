@@ -175,6 +175,27 @@ class EnergyValueTests(unittest.TestCase):
         )
 
         self.assertEqual(value, 20.0)
+
+    def test_today_generation_stays_available_while_collector_is_offline(self) -> None:
+        value = value_for(
+            "inverter_generation_today_energy",
+            {
+                "eToday": "21.3",
+                "eTodayStr": "kWh",
+                "pac": "0.02",
+                "pacStr": "kW",
+                "dcPac": "0.014",
+                "dcPacStr": "kW",
+                "pow1": "6",
+                "pow2": "8",
+                "currentState": "3",
+                "state": 2,
+                "collectorState": 2,
+            },
+        )
+
+        self.assertEqual(value, 21.3)
+
     def test_today_generation_is_unavailable_for_stale_morning_no_generation_reading(self) -> None:
         value = value_for(
             "inverter_generation_today_energy",
@@ -190,6 +211,18 @@ class EnergyValueTests(unittest.TestCase):
         )
 
         self.assertIsNone(value)
+
+    def test_inverter_status_uses_explicit_collector_offline_state(self) -> None:
+        value = value_for(
+            "inverter_state",
+            {
+                "currentState": "3",
+                "state": 2,
+                "collectorState": 2,
+            },
+        )
+
+        self.assertEqual(value, "offline")
 
     def test_today_generation_is_kept_when_power_shows_real_generation(self) -> None:
         value = value_for(
