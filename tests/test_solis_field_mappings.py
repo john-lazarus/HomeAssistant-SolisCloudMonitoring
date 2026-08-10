@@ -185,6 +185,82 @@ def test_station_detail_fallbacks_feed_daily_and_yearly_grid_load_sensors():
     assert sensor_value("grid_import_today_energy", data) == 3.1
     assert sensor_value("grid_export_year_energy", data) == 123.4
 
+def test_station_details_new_added_statistic_sensors():
+    data = {
+          "batteryMonthChargeEnergy": 111,
+          "batteryMonthChargeEnergyStr": "kWh",
+          "batteryYearChargeEnergy": 258,
+          "batteryYearChargeEnergyStr": "kWh",
+          "batteryMonthDischargeEnergy": 107,
+          "batteryMonthDischargeEnergyStr": "kWh",
+          "batteryYearDischargeEnergy": 242,
+          "batteryYearDischargeEnergyStr": "kWh",
+          "homeLoadMonthEnergy": 16,
+          "homeLoadMonthEnergyStr": "kWh",
+          "homeLoadYearEnergy": 61,
+          "homeLoadYearEnergyStr": "kWh",
+          "homeGridTodayEnergy": 0.9,
+          "homeGridTodayEnergyStr": "kWh",
+          "homeGridMonthEnergy": 1.9,
+          "homeGridMonthEnergyStr": "kWh",
+          "homeGridYearEnergy": 6.3,
+          "homeGridYearEnergyStr": "kWh",
+          "homeGridTotalEnergy": 6,
+          "homeGridTotalEnergyStr": "kWh",
+          "backupMonthEnergy": 5.2,
+          "backupMonthEnergyStr": "kWh",
+          "backupYearEnergy": 14,
+          "backupYearEnergyStr": "kWh",
+          "pA": 0,
+          "pB": 0,
+          "pC": 0,
+          "aReactivePower": 0,
+          "aLookedPower": 0,
+          "aPhasePowerFactor": 0,
+          "bReactivePower": 0,
+          "bLookedPower": 0,
+          "bPhasePowerFactor": 0,
+          "cReactivePower": 0,
+          "cLookedPower": 0,
+          "cPhasePowerFactor": 0,
+    }
+    assert sensor_value("batteryMonthChargeEnergy", data) == 111
+    assert sensor_value("batteryMonthChargeEnergyStr", data) == "kWh"
+    assert sensor_value("batteryYearChargeEnergy", data) == 258
+    assert sensor_value("batteryYearChargeEnergyStr", data) == "kWh"
+    assert sensor_value("batteryMonthDischargeEnergy", data) == 107
+    assert sensor_value("batteryMonthDischargeEnergyStr", data) == "kWh"
+    assert sensor_value("batteryYearDischargeEnergy", data) == 242
+    assert sensor_value("batteryYearDischargeEnergyStr", data) == "kWh"
+    assert sensor_value("homeLoadMonthEnergy", data) == 16
+    assert sensor_value("homeLoadMonthEnergyStr", data) == "kWh"
+    assert sensor_value("homeLoadYearEnergy", data) == 61
+    assert sensor_value("homeLoadYearEnergyStr", data) == "kWh"
+    assert sensor_value("homeGridTodayEnergy", data) == 0.9
+    assert sensor_value("homeGridTodayEnergyStr", data) == "kWh"
+    assert sensor_value("homeGridMonthEnergy", data) == 1.9
+    assert sensor_value("homeGridMonthEnergyStr", data) == "kWh"
+    assert sensor_value("homeGridYearEnergy", data) == 6.3
+    assert sensor_value("homeGridYearEnergyStr", data) == "kWh"
+    assert sensor_value("homeGridTotalEnergy", data) == 6
+    assert sensor_value("homeGridTotalEnergyStr", data) == "kWh"
+    assert sensor_value("backupMonthEnergy", data) == 5.2
+    assert sensor_value("backupMonthEnergyStr", data) == "kWh"
+    assert sensor_value("backupYearEnergy", data) == 14
+    assert sensor_value("backupYearEnergyStr", data) == "kWh"
+    assert sensor_value("pA", data) == 0
+    assert sensor_value("pB", data) == 0
+    assert sensor_value("pC", data) == 0
+    assert sensor_value("aReactivePower", data) == 0
+    assert sensor_value("aLookedPower", data) == 0
+    assert sensor_value("aPhasePowerFactor", data) == 0
+    assert sensor_value("bReactivePower", data) == 0
+    assert sensor_value("bLookedPower", data) == 0
+    assert sensor_value("bPhasePowerFactor", data) == 0
+    assert sensor_value("cReactivePower", data) == 0
+    assert sensor_value("cLookedPower", data) == 0
+    assert sensor_value("cPhasePowerFactor", data) == 0
+
 
 def test_battery_power_gets_discharge_sign_from_storage_current():
     assert (
