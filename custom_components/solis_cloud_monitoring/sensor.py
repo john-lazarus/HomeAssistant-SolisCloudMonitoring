@@ -29,6 +29,7 @@ from homeassistant.helpers.entity import EntityCategory
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import StateType
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.util import dt as dt_util
 
 from .const import ATTRIBUTION, DOMAIN, MANUFACTURER
 from .coordinator import SolisCloudDataUpdateCoordinator
@@ -337,11 +338,12 @@ def _today_generation_energy_to_kwh(data: dict[str, Any]) -> float | None:
         return None
 
     # Some SolisCloud accounts briefly return yesterday's eToday value when the
-    # inverter wakes up, before the daily counter resets. If the power fields
-    # show no real generation while the collector is online, do not feed that
-    # stale value into HA statistics. Offline collectors retain the day's total.
+    # inverter wakes up, before the daily counter resets. Restrict this guard to
+    # the morning: the same zero-power/online state is valid after sunset while
+    # the collector is still transitioning offline.
     if (
         value > 0
+        and dt_util.now().hour < 12
         and not _collector_is_offline(data)
         and _has_no_generation_evidence(data)
     ):

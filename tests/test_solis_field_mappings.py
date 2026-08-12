@@ -6,6 +6,7 @@ import json
 import sys
 import types
 from dataclasses import dataclass
+from datetime import datetime
 from datetime import timedelta
 from pathlib import Path
 
@@ -110,6 +111,11 @@ update_mod.CoordinatorEntity = _CoordinatorEntity
 update_mod.DataUpdateCoordinator = _DataUpdateCoordinator
 update_mod.UpdateFailed = _UpdateFailed
 helpers = types.ModuleType("homeassistant.helpers")
+util_mod = types.ModuleType("homeassistant.util")
+util_mod.__path__ = []
+dt_util_mod = types.ModuleType("homeassistant.util.dt")
+dt_util_mod.now = datetime.now
+util_mod.dt = dt_util_mod
 aiohttp_client_mod = types.ModuleType("homeassistant.helpers.aiohttp_client")
 aiohttp_client_mod.async_get_clientsession = lambda hass: None
 sys.modules.update(
@@ -126,6 +132,8 @@ sys.modules.update(
         "homeassistant.helpers.entity_platform": platform_mod,
         "homeassistant.helpers.typing": typing_mod,
         "homeassistant.helpers.update_coordinator": update_mod,
+        "homeassistant.util": util_mod,
+        "homeassistant.util.dt": dt_util_mod,
     }
 )
 

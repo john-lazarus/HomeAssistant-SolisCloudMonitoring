@@ -6,8 +6,10 @@ import sys
 import types
 import unittest
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+from unittest.mock import patch
 
 
 def _install_homeassistant_stubs() -> None:
@@ -63,6 +65,12 @@ def _install_homeassistant_stubs() -> None:
 
     helpers_mod = module("homeassistant.helpers")
     helpers_mod.__path__ = []
+
+    util_mod = module("homeassistant.util")
+    util_mod.__path__ = []
+    dt_util_mod = module("homeassistant.util.dt")
+    dt_util_mod.now = datetime.now
+    util_mod.dt = dt_util_mod
 
     entity_mod = module("homeassistant.helpers.entity")
     entity_mod.EntityCategory = _Values()
@@ -197,20 +205,39 @@ class EnergyValueTests(unittest.TestCase):
         self.assertEqual(value, 21.3)
 
     def test_today_generation_is_unavailable_for_stale_morning_no_generation_reading(self) -> None:
-        value = value_for(
-            "inverter_generation_today_energy",
-            {
-                "eToday": "12.34",
-                "eTodayStr": "kWh",
-                "pac": "20",
-                "pacStr": "W",
-                "dcPac": "0",
-                "dcPacStr": "W",
-                "pow1": "0",
-            },
-        )
+        with patch.object(sensor.dt_util, "now", return_value=datetime(2026, 8, 12, 7)):
+            value = value_for(
+                "inverter_generation_today_energy",
+                {
+                    "eToday": "12.34",
+                    "eTodayStr": "kWh",
+                    "pac": "20",
+                    "pacStr": "W",
+                    "dcPac": "0",
+                    "dcPacStr": "W",
+                    "pow1": "0",
+                },
+            )
 
         self.assertIsNone(value)
+
+    def test_today_generation_keeps_final_total_during_sunset_transition(self) -> None:
+        with patch.object(sensor.dt_util, "now", return_value=datetime(2026, 8, 12, 19)):
+            value = value_for(
+                "inverter_generation_today_energy",
+                {
+                    "eToday": "21.7",
+                    "eTodayStr": "kWh",
+                    "pac": "0",
+                    "pacStr": "W",
+                    "dcPac": "0",
+                    "dcPacStr": "W",
+                    "pow1": "0",
+                    "collectorState": "1",
+                },
+            )
+
+        self.assertEqual(value, 21.7)
 
     def test_inverter_status_uses_explicit_collector_offline_state(self) -> None:
         value = value_for(
