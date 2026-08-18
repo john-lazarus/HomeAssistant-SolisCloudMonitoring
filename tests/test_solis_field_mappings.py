@@ -10,6 +10,8 @@ from datetime import datetime
 from datetime import timedelta
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
@@ -137,15 +139,116 @@ sys.modules.update(
     }
 )
 
-from custom_components.solis_cloud_monitoring.api import SolisCloudAPI
+from custom_components.solis_cloud_monitoring.api import SolisCloudAPI, SolisCloudAPIError
 from custom_components.solis_cloud_monitoring.const import API_STATION_DETAIL
-from custom_components.solis_cloud_monitoring.coordinator import _merge_station_detail
+from custom_components.solis_cloud_monitoring.coordinator import (
+    SolisCloudDataUpdateCoordinator,
+    UpdateFailed,
+    _merge_station_detail,
+)
 from custom_components.solis_cloud_monitoring.sensor import SENSOR_TYPES
 
 
 def sensor_value(key, data):
     desc = next(s for s in SENSOR_TYPES if s.key == key)
     return desc.value_fn(data)
+
+
+class _SequencedAPI:
+    def __init__(self, responses):
+        self.responses = responses
+
+    async def get_inverter_details(self, serial):
+        response = self.responses[serial].pop(0)
+        if isinstance(response, Exception):
+            raise response
+        return response
+
+    async def get_station_details(self, station_id):
+        raise AssertionError("Unexpected station detail request")
+
+
+def test_inverter_detail_failure_retains_data_once_and_success_resets_grace():
+    async def run_test():
+        serial = "ABC"
+        first = {"pac": "1.0"}
+        recovered = {"pac": "2.0"}
+        api = _SequencedAPI(
+            {
+                serial: [
+                    first,
+                    SolisCloudAPIError("temporary"),
+                    SolisCloudAPIError("still failing"),
+                    recovered,
+                    SolisCloudAPIError("temporary again"),
+                ]
+            }
+        )
+        coordinator = SolisCloudDataUpdateCoordinator(object(), api, [serial])
+        coordinator.data = {}
+
+        coordinator.data = await coordinator._async_update_data()
+        assert coordinator.data == {serial: first}
+
+        coordinator.data = await coordinator._async_update_data()
+        assert coordinator.data == {serial: first}
+
+        with pytest.raises(UpdateFailed):
+            await coordinator._async_update_data()
+
+        coordinator.data = await coordinator._async_update_data()
+        assert coordinator.data == {serial: recovered}
+
+        coordinator.data = await coordinator._async_update_data()
+        assert coordinator.data == {serial: recovered}
+
+    asyncio.run(run_test())
+
+
+def test_inverter_detail_grace_is_per_serial():
+    async def run_test():
+        first_a = {"pac": "1.0"}
+        fresh_a = {"pac": "1.4"}
+        first_b = {"pac": "2.0"}
+        second_b = {"pac": "2.2"}
+        third_b = {"pac": "2.3"}
+        api = _SequencedAPI(
+            {
+                "A": [
+                    first_a,
+                    SolisCloudAPIError("A temporary"),
+                    SolisCloudAPIError("A still failing"),
+                    fresh_a,
+                    {"pac": "1.5"},
+                ],
+                "B": [
+                    first_b,
+                    second_b,
+                    third_b,
+                    SolisCloudAPIError("B temporary"),
+                    SolisCloudAPIError("B still failing"),
+                ],
+            }
+        )
+        coordinator = SolisCloudDataUpdateCoordinator(object(), api, ["A", "B"])
+        coordinator.data = {}
+
+        coordinator.data = await coordinator._async_update_data()
+        assert coordinator.data == {"A": first_a, "B": first_b}
+
+        coordinator.data = await coordinator._async_update_data()
+        assert coordinator.data == {"A": first_a, "B": second_b}
+
+        coordinator.data = await coordinator._async_update_data()
+        assert coordinator.data == {"B": third_b}
+
+        coordinator.data = await coordinator._async_update_data()
+        assert coordinator.data == {"A": fresh_a, "B": third_b}
+
+        coordinator.data = await coordinator._async_update_data()
+        assert coordinator.data == {"A": {"pac": "1.5"}}
+
+    asyncio.run(run_test())
 
 
 def test_station_detail_endpoint_is_available_and_uses_station_id():

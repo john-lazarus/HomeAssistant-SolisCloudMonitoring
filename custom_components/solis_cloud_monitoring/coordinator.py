@@ -51,16 +51,19 @@ class SolisCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, dict[str, 
         )
         self.api = api
         self.inverter_serials = inverter_serials
+        self._stale_grace_used: set[str] = set()
 
     async def _async_update_data(self) -> dict[str, dict[str, Any]]:
         """Fetch data from Solis Cloud API."""
         data: dict[str, dict[str, Any]] = {}
+        previous = self.data or {}
         station_cache: dict[str, dict[str, Any] | None] = {}
 
         try:
             for serial in self.inverter_serials:
                 try:
                     inverter_data = await self.api.get_inverter_details(serial)
+                    self._stale_grace_used.discard(serial)
                     station_data = None
                     station_id = inverter_data.get("stationId")
                     if station_id not in (None, ""):
@@ -99,6 +102,15 @@ class SolisCloudDataUpdateCoordinator(DataUpdateCoordinator[dict[str, dict[str, 
                     else:
                         _LOGGER.debug("Updated data for inverter %s", serial)
                 except SolisCloudAPIError as err:
+                    if serial in previous and serial not in self._stale_grace_used:
+                        data[serial] = previous[serial]
+                        self._stale_grace_used.add(serial)
+                        _LOGGER.warning(
+                            "Failed to update inverter %s; retaining previous data once: %s",
+                            serial,
+                            err,
+                        )
+                        continue
                     _LOGGER.warning("Failed to update inverter %s: %s", serial, err)
                     continue
 
