@@ -97,9 +97,12 @@ def _install_homeassistant_stubs() -> None:
         def __class_getitem__(cls, item: Any) -> type:
             return cls
 
+    class UpdateFailed(Exception):
+        pass
+
     update_mod.CoordinatorEntity = CoordinatorEntity
     update_mod.DataUpdateCoordinator = DataUpdateCoordinator
-    update_mod.UpdateFailed = Exception
+    update_mod.UpdateFailed = UpdateFailed
 
     aiohttp_mod = module("aiohttp")
     aiohttp_mod.ClientSession = object
