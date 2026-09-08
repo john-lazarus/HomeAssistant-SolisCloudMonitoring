@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 import importlib
+import importlib.util
+import json
 import sys
 import types
 import unittest
@@ -9,7 +11,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
-from unittest.mock import patch
+from unittest.mock import AsyncMock, Mock, patch
 
 
 def _install_homeassistant_stubs() -> None:
@@ -129,6 +131,80 @@ def value_for(key: str, data: dict[str, Any]) -> Any:
 
 
 class EnergyValueTests(unittest.TestCase):
+    def test_setup_rediscovers_inverters_and_preserves_saved_devices(self) -> None:
+        import asyncio
+
+        client = types.ModuleType("homeassistant.helpers.aiohttp_client")
+        session = Mock()
+        client.async_get_clientsession = lambda hass: session
+        spec = importlib.util.spec_from_file_location(
+            pkg.__name__, Path(pkg.__path__[0]) / "__init__.py"
+        )
+        integration = importlib.util.module_from_spec(spec)
+        with patch.dict(sys.modules, {client.__name__: client}):
+            spec.loader.exec_module(integration)
+
+        entry = types.SimpleNamespace(
+            entry_id="unchanged",
+            data={"api_key": "key", "api_secret": "secret", "inverter_serials": ["A"]},
+        )
+        original_data = entry.data
+        entries = Mock()
+        entries.async_update_entry.side_effect = (
+            lambda entry, *, data: setattr(entry, "data", data)
+        )
+        entries.async_forward_entry_setups = AsyncMock()
+        hass = types.SimpleNamespace(data={}, config_entries=entries)
+
+        async def check(body, expected):
+            saved = entry.data["inverter_serials"]
+            entries.reset_mock()
+            session.reset_mock()
+            response = types.SimpleNamespace(status=200, text=AsyncMock())
+            response.text.return_value = json.dumps(body)
+            context = AsyncMock()
+            context.__aenter__.return_value = response
+            session.post.return_value = context
+            with patch.object(
+                integration.SolisCloudDataUpdateCoordinator,
+                "async_config_entry_first_refresh", new_callable=AsyncMock, create=True,
+            ) as refresh:
+                self.assertTrue(await integration.async_setup_entry(hass, entry))
+                refresh.assert_awaited_once_with()
+            coordinator = hass.data[integration.DOMAIN][entry.entry_id]
+            self.assertEqual(coordinator.inverter_serials, expected)
+            self.assertIs(coordinator.inverter_serials, entry.data["inverter_serials"])
+            self.assertEqual(entry.data, {**original_data, "inverter_serials": expected})
+            self.assertEqual(entries.async_update_entry.call_count, int(saved != expected))
+            entries.async_forward_entry_setups.assert_awaited_once_with(
+                entry, integration.PLATFORMS
+            )
+            session.post.assert_called_once()
+            self.assertTrue(session.post.call_args.args[0].endswith("/v1/api/inverterList"))
+            self.assertEqual(json.loads(session.post.call_args.kwargs["data"]), {"pageSize": "100"})
+
+        def success(records):
+            return {"code": "0", "data": {"page": {"records": records}}}
+
+        async def run():
+            await check(success([{"sn": "A"}, {"sn": " B "}, {"sn": "B"}]), ["A", "B"])
+            self.assertEqual(original_data["inverter_serials"], ["A"])
+            for body in (
+                {"code": "temporary", "msg": "unavailable"},
+                success([]), success([{"sn": "B"}]),
+                None, [], {"code": "0", "data": []},
+                {"code": "0", "data": {"page": None}},
+                success(None), success({"sn": "C"}),
+                *(success([{"sn": "C"}, record]) for record in
+                  (None, {}, {"sn": 123}, {"sn": " "}, {"sn": []})),
+                success([{"sn": sn} for sn in "BCDEF"]),
+            ):
+                with self.subTest(body=body):
+                    await check(body, ["A", "B"])
+            await check(success([{"sn": sn} for sn in "BEDCBB"]), list("ABEDC"))
+
+        asyncio.run(run())
+
     def test_ac_power_suppresses_002_kw_standby_noise(self) -> None:
         value = value_for(
             "inverter_ac_power",

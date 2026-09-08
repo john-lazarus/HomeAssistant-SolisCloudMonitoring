@@ -118,6 +118,8 @@ class SolisCloudAPI:
                         )
 
                     result = json.loads(response_text)
+                    if not isinstance(result, dict):
+                        raise SolisCloudAPIError("Invalid API response")
 
                     # Check API response code
                     if result.get("code") != "0":
@@ -139,19 +141,32 @@ class SolisCloudAPI:
         """Get list of all inverters on the account.
 
         Returns:
-            List of inverter information dictionaries
+            Unique inverter information dictionaries with nonempty, stripped serials
 
         Raises:
             SolisCloudAPIError: On API or network errors
         """
         data = await self._request(API_INVERTER_LIST, {"pageSize": "100"})
 
-        if not data or "page" not in data or "records" not in data["page"]:
+        if not isinstance(data, dict) or not isinstance(data.get("page"), dict):
             raise SolisCloudAPIError("Invalid inverter list response")
 
-        inverters = data["page"]["records"]
+        records = data["page"].get("records")
+        if not isinstance(records, list) or not records:
+            raise SolisCloudAPIError("Invalid or empty inverter list response")
+
+        inverters: dict[str, dict[str, Any]] = {}
+        for record in records:
+            if not isinstance(record, dict):
+                raise SolisCloudAPIError("Invalid inverter record")
+            serial = record.get("sn")
+            if not isinstance(serial, str) or not serial.strip():
+                raise SolisCloudAPIError("Invalid inverter serial")
+            serial = serial.strip()
+            inverters.setdefault(serial, {**record, "sn": serial})
+
         _LOGGER.debug("Found %d inverter(s)", len(inverters))
-        return inverters
+        return list(inverters.values())
 
     async def get_inverter_details(self, serial_number: str) -> dict[str, Any]:
         """Get detailed information for a specific inverter.
