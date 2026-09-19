@@ -12,6 +12,7 @@ from .api import SolisCloudAPI, SolisCloudAPIError
 from .const import (
     CONF_API_KEY,
     CONF_API_SECRET,
+    CONF_INVERTER_SELECTION_CONFIGURED,
     CONF_INVERTER_SERIALS,
     DOMAIN,
     MAX_INVERTERS,
@@ -33,26 +34,27 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     session = async_get_clientsession(hass)
     api = SolisCloudAPI(api_key, api_secret, session)
 
-    # Rediscover on setup/reload, retaining devices missing from this response.
-    try:
-        inverters = await api.get_inverter_list()
-    except SolisCloudAPIError:
-        _LOGGER.debug("Inverter discovery unavailable; retaining configured devices")
-    else:
-        discovered_serials = list(
-            dict.fromkeys(inverter_serials + [inv["sn"] for inv in inverters])
-        )
-        if len(discovered_serials) > MAX_INVERTERS:
-            _LOGGER.warning(
-                "Inverter discovery exceeds the supported limit of %d; "
-                "retaining configured devices",
-                MAX_INVERTERS,
+    if not entry.data.get(CONF_INVERTER_SELECTION_CONFIGURED):
+        # Preserve v2.0.9 discovery for entries that have not made a selection.
+        try:
+            inverters = await api.get_inverter_list()
+        except SolisCloudAPIError:
+            _LOGGER.debug("Inverter discovery unavailable; retaining configured devices")
+        else:
+            discovered_serials = list(
+                dict.fromkeys(inverter_serials + [inv["sn"] for inv in inverters])
             )
-        elif discovered_serials != inverter_serials:
-            inverter_serials = discovered_serials
-            hass.config_entries.async_update_entry(
-                entry, data={**entry.data, CONF_INVERTER_SERIALS: inverter_serials}
-            )
+            if len(discovered_serials) > MAX_INVERTERS:
+                _LOGGER.warning(
+                    "Inverter discovery exceeds the supported limit of %d; "
+                    "retaining configured devices",
+                    MAX_INVERTERS,
+                )
+            elif discovered_serials != inverter_serials:
+                inverter_serials = discovered_serials
+                hass.config_entries.async_update_entry(
+                    entry, data={**entry.data, CONF_INVERTER_SERIALS: inverter_serials}
+                )
 
     # Create coordinator
     coordinator = SolisCloudDataUpdateCoordinator(

@@ -9,15 +9,33 @@
           "api_key": "API Key",
           "api_secret": "API Secret"
         }
+      },
+      "inverters": {
+        "title": "Select inverters",
+        "description": "Select one to five inverters to monitor",
+        "data": {
+          "inverter_serials": "Inverters"
+        }
+      },
+      "reconfigure": {
+        "title": "Select inverters",
+        "description": "Select one to five inverters to monitor. Saved API credentials are used only to refresh this list.",
+        "data": {
+          "inverter_serials": "Inverters"
+        }
       }
     },
     "error": {
       "invalid_auth": "Invalid credentials",
       "cannot_connect": "Cannot connect",
+      "invalid_inverter_selection": "Select only inverters linked to this account",
+      "no_inverters_selected": "Select at least one inverter",
+      "too_many_inverters": "Select no more than five inverters",
       "unknown": "Unknown error"
     },
     "abort": {
-      "already_configured": "Already configured"
+      "already_configured": "Already configured",
+      "reconfigure_successful": "Inverter selection updated"
     }
   }
 }
