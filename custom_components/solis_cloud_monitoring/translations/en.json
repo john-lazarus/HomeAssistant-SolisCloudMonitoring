@@ -8,15 +8,33 @@
           "api_key": "API Key (KeyID)",
           "api_secret": "API Secret (KeySecret)"
         }
+      },
+      "inverters": {
+        "title": "Select inverters",
+        "description": "Select one to five inverters to monitor.",
+        "data": {
+          "inverter_serials": "Inverters"
+        }
+      },
+      "reconfigure": {
+        "title": "Select inverters",
+        "description": "Select one to five inverters to monitor. Saved API credentials are used only to refresh this list.",
+        "data": {
+          "inverter_serials": "Inverters"
+        }
       }
     },
     "error": {
       "invalid_auth": "Invalid API credentials. Please check your API Key and Secret.",
       "cannot_connect": "Unable to connect to Solis Cloud API. Please check your internet connection and try again.",
+      "invalid_inverter_selection": "Select only inverters linked to this account.",
+      "no_inverters_selected": "Select at least one inverter.",
+      "too_many_inverters": "Select no more than five inverters.",
       "unknown": "An unexpected error occurred. Please try again."
     },
     "abort": {
-      "already_configured": "This API Key is already configured."
+      "already_configured": "This API Key is already configured.",
+      "reconfigure_successful": "The inverter selection was updated successfully."
     }
   },
   "entity": {

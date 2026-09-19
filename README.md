@@ -34,7 +34,7 @@ API access is not enabled on every Solis Cloud account by default. If you do not
 
 ## What it creates
 
-The integration discovers the inverters linked to the API account and creates one Home Assistant device per inverter. It supports up to five inverters per account.
+The integration discovers the inverters linked to the API account and lets you select up to five to monitor. To change the selection later, use **Reconfigure** on the integration entry in **Settings → Devices & services**.
 
 The exact sensors depend on what the inverter reports. Depending on the model, you may get:
 

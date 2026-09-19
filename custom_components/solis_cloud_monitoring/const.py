@@ -9,6 +9,7 @@ DOMAIN: Final = "solis_cloud_monitoring"
 CONF_API_KEY: Final = "api_key"
 CONF_API_SECRET: Final = "api_secret"
 CONF_INVERTER_SERIALS: Final = "inverter_serials"
+CONF_INVERTER_SELECTION_CONFIGURED: Final = "inverter_selection_configured"
 
 # API
 API_BASE_URL: Final = "https://www.soliscloud.com:13333"
