@@ -1,0 +1,50 @@
+name: Publish release
+
+# Publishing is explicit: create release/vX.Y.Z at the tested main commit.
+# Ordinary pushes and pull requests never publish a release.
+on: create
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event.ref }}
+  cancel-in-progress: false
+
+jobs:
+  checks:
+    if: github.event.ref_type == 'branch' && startsWith(github.event.ref, 'release/v')
+    uses: ./.github/workflows/tests.yml
+  publish:
+    needs: checks
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate version and publish tested commit
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_REF: ${{ github.event.ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(python -c 'import json; print(json.load(open("custom_components/solis_cloud_monitoring/manifest.json"))["version"])')
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          tag="v$version"
+          [[ "$RELEASE_REF" == "release/$tag" ]]
+          notes="RELEASE_NOTES_$tag.md"
+          test -s "$notes"
+          main_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/heads/main" --jq .object.sha)
+          [[ "$main_sha" == "$GITHUB_SHA" ]]
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            tag_sha=$(gh api "repos/$GITHUB_REPOSITORY/git/ref/tags/$tag" --jq .object.sha)
+            [[ "$tag_sha" == "$GITHUB_SHA" ]]
+            echo "Release $tag already exists at the tested commit; leaving it unchanged."
+            exit 0
+          fi
+          gh release create "$tag" --repo "$GITHUB_REPOSITORY" \
+            --target "$GITHUB_SHA" --title "Solis Cloud Monitoring $tag" \
+            --notes-file "$notes" --latest

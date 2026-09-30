@@ -28,27 +28,14 @@ _LOGGER = logging.getLogger(__name__)
 async def validate_api_credentials(
     hass: HomeAssistant, api_key: str, api_secret: str
 ) -> list[dict[str, Any]]:
-    """Validate API credentials by fetching inverter list.
-    
-    Args:
-        hass: Home Assistant instance
-        api_key: Solis Cloud API key
-        api_secret: Solis Cloud API secret
-        
-    Returns:
-        List of inverters found
-        
-    Raises:
-        SolisCloudAPIError: If credentials are invalid or connection fails
-    """
+    """Validate API credentials by fetching the account's inverter list."""
     session = async_get_clientsession(hass)
     api = SolisCloudAPI(api_key, api_secret, session)
-    
     inverters = await api.get_inverter_list()
-    
     if not inverters:
-        raise SolisCloudAPIError("No inverters found on this account")
-    
+        raise SolisCloudAPIError(
+            "No inverters found on this account", error_key="no_inverters"
+        )
     return inverters
 
 
@@ -67,10 +54,8 @@ def _inverter_options(
         ]
         label = " - ".join(dict.fromkeys([*details, serial]))
         options.setdefault(serial, label)
-
     for serial in saved_serials or []:
         options.setdefault(serial, serial)
-
     return [
         selector.SelectOptionDict(value=serial, label=label)
         for serial, label in options.items()
@@ -121,37 +106,35 @@ class SolisCloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
     ) -> FlowResult:
-        """Handle the initial step."""
+        """Handle initial setup without swallowing Home Assistant flow aborts."""
         errors: dict[str, str] = {}
-
         if user_input is not None:
+            # AbortFlow is normal control flow, not an unexpected API failure.
+            # Check locally first so duplicates do not contact an unhealthy API.
+            await self.async_set_unique_id(user_input[CONF_API_KEY])
+            self._abort_if_unique_id_configured()
+
             try:
                 inverters = await validate_api_credentials(
                     self.hass,
                     user_input[CONF_API_KEY],
                     user_input[CONF_API_SECRET],
                 )
-
-                # Create unique ID from API key to prevent duplicates
-                await self.async_set_unique_id(user_input[CONF_API_KEY])
+            except SolisCloudAPIError as err:
+                _LOGGER.error("Failed to validate credentials: %s", err)
+                errors["base"] = err.error_key
+            except Exception:
+                _LOGGER.exception("Unexpected error during setup")
+                errors["base"] = "unknown"
+            else:
+                # Another entry could have been created while the request ran.
                 self._abort_if_unique_id_configured()
-
                 self._credentials = {
                     CONF_API_KEY: user_input[CONF_API_KEY],
                     CONF_API_SECRET: user_input[CONF_API_SECRET],
                 }
                 self._inverters = inverters
                 return await self.async_step_inverters()
-
-            except SolisCloudAPIError as err:
-                _LOGGER.error("Failed to validate credentials: %s", err)
-                if "Z0001" in str(err):
-                    errors["base"] = "invalid_auth"
-                else:
-                    errors["base"] = "cannot_connect"
-            except Exception:
-                _LOGGER.exception("Unexpected error during setup")
-                errors["base"] = "unknown"
 
         return self.async_show_form(
             step_id="user",
@@ -171,12 +154,13 @@ class SolisCloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         options = _inverter_options(self._inverters)
         available_serials = {option["value"] for option in options}
         errors: dict[str, str] = {}
-
         if user_input is not None:
             selection = user_input.get(CONF_INVERTER_SERIALS)
             if error := _selection_error(selection, available_serials):
                 errors[CONF_INVERTER_SERIALS] = error
             else:
+                # Also guard a selection form left open while an entry is added.
+                self._abort_if_unique_id_configured()
                 return self.async_create_entry(
                     title="Solis Cloud Monitoring",
                     data={
@@ -199,7 +183,6 @@ class SolisCloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         """Choose inverters for an existing entry without exposing credentials."""
         entry = self.hass.config_entries.async_get_entry(self.context["entry_id"])
         errors: dict[str, str] = {}
-
         if not hasattr(self, "_reconfigure_inverters"):
             try:
                 self._reconfigure_inverters = await validate_api_credentials(
@@ -208,10 +191,8 @@ class SolisCloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     entry.data[CONF_API_SECRET],
                 )
             except SolisCloudAPIError as err:
-                _LOGGER.error("Failed to discover inverters for reconfiguration")
-                errors["base"] = (
-                    "invalid_auth" if "Z0001" in str(err) else "cannot_connect"
-                )
+                _LOGGER.error("Failed to discover inverters for reconfiguration: %s", err)
+                errors["base"] = err.error_key
             except Exception:
                 _LOGGER.exception("Unexpected error during inverter reconfiguration")
                 errors["base"] = "unknown"
@@ -221,7 +202,6 @@ class SolisCloudConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             entry.data[CONF_INVERTER_SERIALS],
         )
         available_serials = {option["value"] for option in options}
-
         if user_input is not None and not errors:
             selection = user_input.get(CONF_INVERTER_SERIALS)
             if error := _selection_error(selection, available_serials):
