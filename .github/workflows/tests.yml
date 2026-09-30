@@ -5,24 +5,56 @@ on:
     paths:
       - "custom_components/solis_cloud_monitoring/**"
       - "tests/**"
+      - "tests_runtime/**"
       - ".github/workflows/tests.yml"
   pull_request:
     paths:
       - "custom_components/solis_cloud_monitoring/**"
       - "tests/**"
+      - "tests_runtime/**"
       - ".github/workflows/tests.yml"
+  workflow_call:
+
+permissions:
+  contents: read
 
 jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install test runner
-        run: python -m pip install pytest
-      - name: Run tests
-        run: pytest -q
+      - name: Install test dependencies
+        run: python -m pip install pytest==9.0.2 aiohttp==3.13.3
+      - name: Run existing regressions
+        run: python -m pytest -q tests
+      - name: Run API boundary regressions with real aiohttp
+        # Legacy tests stub sys.modules, so use a separate process.
+        run: python -m pytest -q tests_runtime/test_api_errors.py
+  config-flow:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python: "3.12"
+            homeassistant: "2024.8.3"
+          - python: "3.14.2"
+            homeassistant: "2026.9.3"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install real Home Assistant
+        env:
+          HA_VERSION: ${{ matrix.homeassistant }}
+        run: python -m pip install pytest==9.0.2 "homeassistant==$HA_VERSION"
+      - name: Run config-flow regressions with real HA helpers
+        run: python -m pytest -q tests_runtime/test_config_flow_errors.py

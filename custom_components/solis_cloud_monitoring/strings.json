@@ -26,16 +26,23 @@
       }
     },
     "error": {
-      "invalid_auth": "Invalid credentials",
-      "cannot_connect": "Cannot connect",
-      "invalid_inverter_selection": "Select only inverters linked to this account",
-      "no_inverters_selected": "Select at least one inverter",
-      "too_many_inverters": "Select no more than five inverters",
-      "unknown": "Unknown error"
+      "invalid_auth": "SolisCloud denied API access. Check the API key, secret and account permissions.",
+      "cannot_connect": "Unable to reach the SolisCloud API. This can be a network or service problem.",
+      "timeout": "The SolisCloud request timed out. Try again later.",
+      "server_error": "SolisCloud returned a server error. Try again later; changing credentials will not fix this response.",
+      "rate_limited": "SolisCloud is limiting API requests. Wait before trying again.",
+      "invalid_response": "SolisCloud returned an unexpected response. Check the Home Assistant logs for details.",
+      "no_inverters": "No inverters were returned for this API account. Check which devices are linked to it.",
+      "api_error": "SolisCloud rejected the request. Check the API error code in the Home Assistant logs.",
+      "invalid_inverter_selection": "Select only inverters linked to this account.",
+      "no_inverters_selected": "Select at least one inverter.",
+      "too_many_inverters": "Select no more than five inverters.",
+      "unknown": "An unexpected error occurred. Check the Home Assistant logs for details."
     },
     "abort": {
-      "already_configured": "Already configured",
-      "reconfigure_successful": "Inverter selection updated"
+      "already_configured": "This API key is already configured. Use the existing integration entry.",
+      "already_in_progress": "Setup for this API key is already in progress. Finish or close the other setup first.",
+      "reconfigure_successful": "The inverter selection was updated successfully."
     }
   }
 }
